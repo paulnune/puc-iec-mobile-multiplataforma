@@ -25,8 +25,10 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.puciec.eleicoes.android.ui.theme.Spacing
+import com.puciec.eleicoes.domain.a11y.Contrast
 import com.puciec.eleicoes.domain.mapa.MapaColors
 import com.puciec.eleicoes.domain.mapa.Uf
 import com.puciec.eleicoes.domain.mapa.Ufs
@@ -37,7 +39,7 @@ import com.puciec.eleicoes.domain.model.PlaceResult
 internal fun rgbColor(rgb: Int): Color = Color(0xFF000000.toInt() or rgb)
 
 private val MAX_TILE = 64.dp
-private val DARK_TEXT = Color(0xFF191C1A)
+private const val DARK_TEXT = 0x191C1A
 
 /**
  * Grade de UFs do Mapa (#6): cada UF é um quadrado na posição aproximada do mapa (AD-001), pintado
@@ -101,7 +103,10 @@ private fun UfTile(uf: Uf, place: PlaceResult?, base: Int, size: Dp, onClick: (S
         Text(
             uf.code,
             style = MaterialTheme.typography.labelLarge,
-            color = if (fill.luminance() < 0.5f) Color.White else DARK_TEXT,
+            // Negrito: em 14 sp vira "texto grande" no WCAG. A cor sai pelo contraste real (#11), e não por
+            // luminância < 0,5, que punha branco em fundos médios com menos de 3:1.
+            fontWeight = FontWeight.Bold,
+            color = rgbColor(Contrast.readableOn(fill.toArgb() and 0xFFFFFF, dark = DARK_TEXT)),
             modifier = Modifier.clearAndSetSemantics { },
         )
     }
