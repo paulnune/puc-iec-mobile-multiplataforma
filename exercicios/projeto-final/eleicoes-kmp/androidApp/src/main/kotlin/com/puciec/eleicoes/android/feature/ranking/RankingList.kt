@@ -85,7 +85,7 @@ fun RankingList(
  * O botão aparece na busca e também como saída se a carga automática não disparar: a lista nunca fica sem caminho.
  */
 @Composable
-private fun RankingFooter(
+fun RankingFooter(
     count: Int,
     isLoadingMore: Boolean,
     endReached: Boolean,

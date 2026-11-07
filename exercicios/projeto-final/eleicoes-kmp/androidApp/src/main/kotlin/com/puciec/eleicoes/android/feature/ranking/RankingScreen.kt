@@ -49,7 +49,21 @@ fun RankingScreen(viewModel: RankingViewModel, onCandidateClick: (Candidate) -> 
             is UiState.Success -> {
                 val visible = remember(candidates.data, state.searchText) { candidates.data.matchingText(state.searchText) }
                 if (visible.isEmpty()) {
-                    EmptyState(title = "Nenhum candidato com esse nome", message = "Tente outro nome ou limpe a busca.")
+                    EmptyState(
+                        title = "Nenhum candidato com esse nome",
+                        message = "Tente outro nome ou limpe a busca.",
+                        action = {
+                            if (state.isLoadingMore || state.loadMoreError != null || !state.endReached) {
+                                RankingFooter(
+                                    count = candidates.data.size,
+                                    isLoadingMore = state.isLoadingMore,
+                                    endReached = state.endReached,
+                                    error = state.loadMoreError,
+                                    onLoadMore = viewModel::loadMore,
+                                )
+                            }
+                        },
+                    )
                 } else {
                     RankingList(
                         candidates = visible,
