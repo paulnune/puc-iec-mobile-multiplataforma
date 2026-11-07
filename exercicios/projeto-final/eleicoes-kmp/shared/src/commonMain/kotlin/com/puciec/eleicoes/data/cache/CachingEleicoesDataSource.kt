@@ -15,6 +15,7 @@ import com.puciec.eleicoes.domain.model.DataStatus
 import com.puciec.eleicoes.domain.model.Office
 import com.puciec.eleicoes.domain.model.PlaceScope
 import com.puciec.eleicoes.domain.model.WealthSort
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -102,25 +103,52 @@ class CachingEleicoesDataSource(
     /**
      * Salvo há menos de [freshFor]: devolve sem chamar a fonte e sem mexer no status. Senão chama a
      * fonte, grava o sucesso e, nas falhas da AD-006, devolve o salvo de qualquer idade (AD-008).
+     * Um arquivo ilegível conta como ausente, e uma falha ao gravar não derruba a resposta.
      */
     private suspend fun <T> cached(key: String, serializer: KSerializer<T>, load: suspend () -> T): T {
-        val saved = store.read(key)
+        val saved = readSaved(key, serializer)
         // Data no futuro (relógio do aparelho mudou) não conta como recente.
         val age = saved?.let { now() - it.savedAtEpochMillis }
-        if (saved != null && age != null && age >= 0 && age < freshFor.inWholeMilliseconds) {
-            return json.decodeFromString(serializer, saved.json)
-        }
+        if (saved != null && age != null && age >= 0 && age < freshFor.inWholeMilliseconds) return saved.value
+
         val value = try {
             load()
         } catch (e: AppError) {
             if (!e.usesCache() || saved == null) throw e
-            val fallback = json.decodeFromString(serializer, saved.json)
             _status.value = DataStatus.Cached(saved.savedAtEpochMillis)
-            return fallback
+            return saved.value
         }
-        store.write(key, CachedResponse(json.encodeToString(serializer, value), now()))
+        writeQuietly(key, CachedResponse(json.encodeToString(serializer, value), now()))
         _status.value = DataStatus.Live
         return value
+    }
+
+    private class Saved<T>(val value: T, val savedAtEpochMillis: Long)
+
+    private suspend fun <T> readSaved(key: String, serializer: KSerializer<T>): Saved<T>? {
+        val stored = try {
+            store.read(key)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        return try {
+            Saved(json.decodeFromString(serializer, stored.json), stored.savedAtEpochMillis)
+        } catch (e: IllegalArgumentException) {
+            // SerializationException herda de IllegalArgumentException: arquivo corrompido ou de outro formato.
+            null
+        }
+    }
+
+    private suspend fun writeQuietly(key: String, response: CachedResponse) {
+        try {
+            store.write(key, response)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Sem espaço ou sem permissão: a tela segue com a resposta ao vivo.
+        }
     }
 }
 

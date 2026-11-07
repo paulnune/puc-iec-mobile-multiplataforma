@@ -24,6 +24,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotEquals
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 
@@ -295,5 +297,55 @@ class CachingEleicoesDataSourceTest {
 
         assertEquals(savedInFuture, cache.getCandidate("c1"), "continua valendo como fallback")
         assertEquals(DataStatus.Cached(savedAtEpochMillis = start + day), cache.status.value)
+    }
+
+    @Test
+    fun `arquivo corrompido conta como sem cache`() = runTest {
+        cache.getParty("p13")
+        val key = store.entries.keys.single()
+        store.entries[key] = CachedResponse(json = "{quebrado", savedAtEpochMillis = start)
+
+        // Dentro da janela de 5 minutos: o arquivo ruim não vale, então chama a fonte.
+        clock = start + minute
+        source.version = 2
+        assertEquals("v2", cache.getParty("p13").acronym)
+        assertEquals(2, source.calls)
+
+        // Com a fonte falhando: o arquivo ruim não vale como fallback, então sai o erro da fonte.
+        store.entries[key] = CachedResponse(json = "{quebrado", savedAtEpochMillis = start)
+        clock = start + day
+        source.error = AppError.Server("HTTP 500")
+        assertEquals(AppError.Server("HTTP 500"), assertFails { cache.getParty("p13") })
+    }
+
+    @Test
+    fun `falha ao gravar nao derruba a resposta`() = runTest {
+        cache.getParty("p13")
+        clock = start + day
+        source.error = AppError.NoConnection
+        cache.getParty("p13")
+        assertEquals(DataStatus.Cached(savedAtEpochMillis = start), cache.status.value)
+
+        store.failWrites = true
+        source.error = null
+        source.version = 2
+        val live = cache.getCandidate("c1")
+
+        assertEquals("v2", live.ballotName)
+        assertEquals(DataStatus.Live, cache.status.value)
+    }
+
+    @Test
+    fun `cancelamento passa direto`() = runTest {
+        cache.getParty("p13")
+        clock = start + day
+        source.error = AppError.NoConnection
+        cache.getParty("p13")
+        val before = cache.status.value
+
+        source.error = CancellationException("tela fechada")
+        assertFailsWith<CancellationException> { cache.getParty("p13") }
+
+        assertEquals(before, cache.status.value, "status não muda")
     }
 }
