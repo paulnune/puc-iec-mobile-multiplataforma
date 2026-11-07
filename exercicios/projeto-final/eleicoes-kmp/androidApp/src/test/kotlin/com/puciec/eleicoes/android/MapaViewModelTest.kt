@@ -27,6 +27,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -45,6 +46,9 @@ class MapaViewModelTest {
         var failPlace = false
         var empty = false
 
+        /** Quando não nulo, as respostas esperam este sinal: deixa ver o estado de carregando. */
+        var gate: CompletableDeferred<Unit>? = null
+
         private fun vote(name: String, party: String, votes: Long, share: Double) =
             VoteDto(votes = votes, voteShare = share, ballotName = name, partyAcronym = party)
 
@@ -59,6 +63,7 @@ class MapaViewModelTest {
 
         override suspend fun listPlaceResults(office: Office, scope: PlaceScope, state: String?, round: Int?): List<PlaceResultDto> {
             calls += Call(office, scope, null, round)
+            gate?.await()
             if (failPlaces) throw AppError.NoConnection
             if (empty) return emptyList()
             return when {
@@ -78,6 +83,7 @@ class MapaViewModelTest {
 
         override suspend fun getPlaceResult(code: String, office: Office, scope: PlaceScope, round: Int?): PlaceResultDto {
             calls += Call(office, scope, code, round)
+            gate?.await()
             if (failPlace) throw AppError.Server("HTTP 500")
             return place(office, scope, code, vote("TARCÍSIO", "REPUBLICANOS", 14_491_874, 62.7), vote("FERNANDO HADDAD", "PT", 8_423_656, 36.4))
         }
@@ -196,5 +202,39 @@ class MapaViewModelTest {
         assertNull(vm.state.value.selectedCode)
         assertEquals(Office.GOVERNOR, vm.state.value.office)
         assertEquals(GOVERNOR_HINT, vm.overview().headline)
+    }
+
+    @Test
+    fun `voltar para presidente traz a frase nacional`() {
+        val vm = viewModel()
+        vm.onOfficeChange(Office.GOVERNOR)
+        assertEquals(GOVERNOR_HINT, vm.overview().headline)
+        vm.onOfficeChange(Office.PRESIDENT)
+        assertEquals(Office.PRESIDENT, vm.state.value.office)
+        val overview = vm.overview()
+        assertEquals(
+            "No Brasil, Flavio Bolsonaro teve 56.104.503 votos e Lula 53.879.538. " +
+                "Diferença de 2,2 milhões de votos. 100% das seções apuradas.",
+            overview.headline,
+        )
+        assertEquals("ZZ", overview.exterior?.code)
+    }
+
+    @Test
+    fun `enquanto carrega mostra carregando na tela e no sheet`() {
+        val pending = CompletableDeferred<Unit>()
+        source.gate = pending
+        val vm = viewModel()
+        assertIs<UiState.Loading>(vm.state.value.overview)
+        pending.complete(Unit)
+        assertIs<UiState.Success<MapaOverview>>(vm.state.value.overview)
+
+        val pendingPlace = CompletableDeferred<Unit>()
+        source.gate = pendingPlace
+        vm.onPlaceSelected("SP")
+        assertIs<UiState.Loading>(vm.state.value.place)
+        assertIs<UiState.Success<MapaOverview>>(vm.state.value.overview)
+        pendingPlace.complete(Unit)
+        assertIs<UiState.Success<PlaceResult>>(vm.state.value.place)
     }
 }
