@@ -15,11 +15,17 @@ enum class RankingSort {
 /**
  * Ordena as variações segundo o [sort]. Quem não tem eleição anterior (delta nulo) fica fora.
  */
-fun rankWealthChanges(changes: List<WealthChange>, sort: RankingSort): List<WealthChange> {
+fun rankWealthVariations(changes: List<WealthVariation>, sort: RankingSort): List<WealthVariation> {
     val withDelta = changes.filter { it.delta != null }
     return when (sort) {
         RankingSort.BIGGEST_CHANGE -> withDelta.sortedByDescending { kotlin.math.abs(it.delta!!) }
         RankingSort.MOST_GAINED -> withDelta.filter { it.delta!! > 0 }.sortedByDescending { it.delta }
         RankingSort.MOST_LOST -> withDelta.filter { it.delta!! < 0 }.sortedBy { it.delta }
     }
+}
+
+/** Ranking da tela: as variações ordenadas pelo chip, de volta aos candidatos (sem histórico fica fora). */
+fun rankEvolucao(items: List<CandidateEvolucao>, sort: RankingSort): List<CandidateEvolucao> {
+    val byId = items.associateBy { it.candidate.id }
+    return rankWealthVariations(items.mapNotNull { it.variation }, sort).mapNotNull { byId[it.candidateId] }
 }

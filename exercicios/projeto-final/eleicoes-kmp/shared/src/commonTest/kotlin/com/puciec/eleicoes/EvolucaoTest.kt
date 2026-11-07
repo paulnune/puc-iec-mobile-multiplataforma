@@ -1,6 +1,6 @@
 package com.puciec.eleicoes
 
-import com.puciec.eleicoes.domain.evolucao.wealthChange
+import com.puciec.eleicoes.domain.evolucao.wealthVariation
 import com.puciec.eleicoes.domain.model.Filing
 import com.puciec.eleicoes.domain.model.Office
 import com.puciec.eleicoes.domain.model.Outcome
@@ -19,7 +19,7 @@ class EvolucaoTest {
             filing(2026, totalAssets = 300.0),
         )
 
-        val change = wealthChange(timeline)
+        val change = wealthVariation(timeline)
 
         assertEquals(2022, change?.previousYear)
         assertEquals(150.0, change?.previousAssets)
@@ -35,7 +35,7 @@ class EvolucaoTest {
             filing(2026, totalAssets = 100.0),
         )
 
-        val change = wealthChange(timeline)
+        val change = wealthVariation(timeline)
 
         assertEquals(-100.0, change?.delta)
         assertEquals(-0.5, change?.ratio)
@@ -43,7 +43,7 @@ class EvolucaoTest {
 
     @Test
     fun `sem eleicao anterior nao ha delta nem razao`() {
-        val change = wealthChange(listOf(filing(2026, totalAssets = 300.0)))
+        val change = wealthVariation(listOf(filing(2026, totalAssets = 300.0)))
 
         assertNull(change?.previousYear)
         assertNull(change?.delta)
@@ -58,7 +58,7 @@ class EvolucaoTest {
             filing(2026, totalAssets = 500.0),
         )
 
-        val change = wealthChange(timeline)
+        val change = wealthVariation(timeline)
 
         assertEquals(500.0, change?.delta)
         assertNull(change?.ratio)
@@ -68,7 +68,7 @@ class EvolucaoTest {
     fun `sem candidatura em 2026 nao ha variacao`() {
         val timeline = listOf(filing(2018, totalAssets = 100.0), filing(2022, totalAssets = 150.0))
 
-        assertNull(wealthChange(timeline))
+        assertNull(wealthVariation(timeline))
     }
 
     private fun filing(year: Int, totalAssets: Double) = Filing(

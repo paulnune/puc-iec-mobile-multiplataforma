@@ -4,6 +4,7 @@ import android.content.Context
 import com.puciec.eleicoes.ApiConfig
 import com.puciec.eleicoes.android.ui.theme.ThemePreference
 import com.puciec.eleicoes.data.repository.CandidatesRepository
+import com.puciec.eleicoes.data.repository.EvolucaoRepository
 import com.puciec.eleicoes.data.repository.PartiesRepository
 import com.puciec.eleicoes.data.repository.ResultsRepository
 import com.puciec.eleicoes.data.source.EleicoesDataSource
@@ -30,6 +31,7 @@ class AppContainer(context: Context) {
     val partiesRepository = PartiesRepository(dataSource)
     val candidatesRepository = CandidatesRepository(dataSource, partiesRepository)
     val resultsRepository = ResultsRepository(dataSource)
+    val evolucaoRepository = EvolucaoRepository(candidatesRepository)
 
     /** Em memória: some ao fechar o app. O #5 troca pela implementação com DataStore. */
     val favoritesRepository: FavoritesRepository = InMemoryFavoritesRepository()

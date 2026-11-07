@@ -1,8 +1,8 @@
 package com.puciec.eleicoes
 
 import com.puciec.eleicoes.domain.evolucao.RankingSort
-import com.puciec.eleicoes.domain.evolucao.WealthChange
-import com.puciec.eleicoes.domain.evolucao.rankWealthChanges
+import com.puciec.eleicoes.domain.evolucao.WealthVariation
+import com.puciec.eleicoes.domain.evolucao.rankWealthVariations
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -16,33 +16,33 @@ class EvolucaoRankingTest {
 
     @Test
     fun `maior variacao ordena pelo modulo do delta, do maior ao menor`() {
-        val ranking = rankWealthChanges(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.BIGGEST_CHANGE)
+        val ranking = rankWealthVariations(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.BIGGEST_CHANGE)
 
         assertEquals(listOf("B", "A", "C"), ranking.map { it.candidateId })
     }
 
     @Test
     fun `mais ganhou mostra so deltas positivos, do maior ao menor`() {
-        val ranking = rankWealthChanges(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.MOST_GAINED)
+        val ranking = rankWealthVariations(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.MOST_GAINED)
 
         assertEquals(listOf("A", "C"), ranking.map { it.candidateId })
     }
 
     @Test
     fun `mais perdeu mostra so deltas negativos, do mais negativo ao menos`() {
-        val ranking = rankWealthChanges(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.MOST_LOST)
+        val ranking = rankWealthVariations(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.MOST_LOST)
 
         assertEquals(listOf("B"), ranking.map { it.candidateId })
     }
 
     @Test
     fun `quem nao tem eleicao anterior fica fora do ranking`() {
-        val ranking = rankWealthChanges(listOf(semHistorico), RankingSort.BIGGEST_CHANGE)
+        val ranking = rankWealthVariations(listOf(semHistorico), RankingSort.BIGGEST_CHANGE)
 
         assertEquals(emptyList(), ranking.map { it.candidateId })
     }
 
-    private fun change(id: String, delta: Double?) = WealthChange(
+    private fun change(id: String, delta: Double?) = WealthVariation(
         candidateId = id,
         currentYear = 2026,
         currentAssets = 0.0,

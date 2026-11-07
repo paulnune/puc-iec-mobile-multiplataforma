@@ -11,7 +11,7 @@ const val CURRENT_YEAR = 2026
  * [delta] e [ratio] são nulos quando não há eleição anterior; [ratio] também é nulo quando
  * o patrimônio anterior é zero (divisão por zero).
  */
-data class WealthChange(
+data class WealthVariation(
     val candidateId: String,
     val currentYear: Int,
     val currentAssets: Double,
@@ -25,13 +25,13 @@ data class WealthChange(
  * Compara a candidatura de [CURRENT_YEAR] com a eleição anterior mais recente da [timeline].
  * Retorna nulo quando a pessoa não tem candidatura em [CURRENT_YEAR].
  */
-fun wealthChange(timeline: List<Filing>): WealthChange? {
+fun wealthVariation(timeline: List<Filing>): WealthVariation? {
     val current = timeline.firstOrNull { it.year == CURRENT_YEAR } ?: return null
     val previous = timeline.filter { it.year < CURRENT_YEAR }.maxByOrNull { it.year }
     val delta = previous?.let { current.totalAssets - it.totalAssets }
     val ratio = if (previous != null && previous.totalAssets != 0.0) delta?.div(previous.totalAssets) else null
 
-    return WealthChange(
+    return WealthVariation(
         candidateId = current.candidateId,
         currentYear = CURRENT_YEAR,
         currentAssets = current.totalAssets,
