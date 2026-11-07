@@ -225,4 +225,75 @@ class CachingEleicoesDataSourceTest {
 
         assertEquals(DataStatus.Live, cache.status.value)
     }
+
+    private val minute = 60 * 1000L
+
+    @Test
+    fun `menos de 5 minutos nao chama a fonte`() = runTest {
+        val live = cache.getCandidate("c1")
+        assertEquals(1, source.calls)
+
+        clock = start + 5 * minute - 1
+        source.version = 2
+        val again = cache.getCandidate("c1")
+
+        assertEquals(1, source.calls, "não chamou a fonte de novo")
+        assertEquals(live, again)
+        assertEquals("v1", again.ballotName)
+    }
+
+    @Test
+    fun `cinco minutos ou mais chama a fonte`() = runTest {
+        cache.getCandidate("c1")
+        clock = start + 5 * minute
+        source.version = 2
+
+        val fresh = cache.getCandidate("c1")
+
+        assertEquals(2, source.calls)
+        assertEquals("v2", fresh.ballotName)
+        assertEquals(start + 5 * minute, store.entries.values.single().savedAtEpochMillis, "gravou a resposta nova")
+    }
+
+    @Test
+    fun `janela de 5 minutos nao muda o status`() = runTest {
+        cache.getParty("p13")
+        clock = start + 2 * day
+        cache.getCandidate("c1")
+        source.error = AppError.NoConnection
+        cache.getParty("p13")
+        assertEquals(DataStatus.Cached(savedAtEpochMillis = start), cache.status.value)
+
+        clock += minute
+        val callsBefore = source.calls
+        cache.getCandidate("c1")
+
+        assertEquals(callsBefore, source.calls, "veio da janela, sem chamar a fonte")
+        assertEquals(DataStatus.Cached(savedAtEpochMillis = start), cache.status.value)
+    }
+
+    @Test
+    fun `data no futuro chama a fonte e ainda serve de fallback`() = runTest {
+        clock = start + day
+        val savedInFuture = cache.getCandidate("c1")
+
+        // O relógio do aparelho voltou um dia: a resposta salva parece vir do futuro.
+        clock = start
+        source.version = 2
+        val fresh = cache.getCandidate("c1")
+        assertEquals(2, source.calls, "data no futuro não vale como janela de 5 minutos")
+        assertEquals("v2", fresh.ballotName)
+
+        val store = MemoryStore()
+        val source = FakeSource()
+        var now = start + day
+        val cache = CachingEleicoesDataSource(delegate = source, store = store, now = { now })
+        cache.getCandidate("c1")
+        now = start
+        source.version = 2
+        source.error = AppError.NoConnection
+
+        assertEquals(savedInFuture, cache.getCandidate("c1"), "continua valendo como fallback")
+        assertEquals(DataStatus.Cached(savedAtEpochMillis = start + day), cache.status.value)
+    }
 }

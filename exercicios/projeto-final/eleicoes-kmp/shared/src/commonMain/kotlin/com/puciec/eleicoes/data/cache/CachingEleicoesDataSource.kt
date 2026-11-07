@@ -15,6 +15,8 @@ import com.puciec.eleicoes.domain.model.DataStatus
 import com.puciec.eleicoes.domain.model.Office
 import com.puciec.eleicoes.domain.model.PlaceScope
 import com.puciec.eleicoes.domain.model.WealthSort
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,12 +28,15 @@ import kotlinx.serialization.json.Json
  * Cache offline (#12): decorator da porta [EleicoesDataSource]. Grava em disco a última resposta boa
  * de cada consulta e a devolve quando a rede ou a API falham. Repositórios e telas não mudam.
  *
- * [now] é o relógio em milissegundos (injetado para os testes controlarem o tempo).
+ * Uma resposta salva há menos de [freshFor] volta sem chamar a fonte, para respeitar o limite de
+ * 60 req/min mesmo depois de fechar e abrir o app (AD-007). [now] é o relógio em milissegundos
+ * (injetado para os testes controlarem o tempo).
  */
 class CachingEleicoesDataSource(
     private val delegate: EleicoesDataSource,
     private val store: CacheStore,
     private val now: () -> Long,
+    private val freshFor: Duration = 5.minutes,
     private val json: Json = EleicoesJson,
 ) : EleicoesDataSource {
 
@@ -94,9 +99,17 @@ class CachingEleicoesDataSource(
     override suspend fun getParty(id: String): PartyDto =
         cached("getParty|$id", PartyDto.serializer()) { delegate.getParty(id) }
 
-    /** Chama a fonte; grava o sucesso; nas falhas da AD-006 devolve o salvo, se houver. */
+    /**
+     * Salvo há menos de [freshFor]: devolve sem chamar a fonte e sem mexer no status. Senão chama a
+     * fonte, grava o sucesso e, nas falhas da AD-006, devolve o salvo de qualquer idade (AD-008).
+     */
     private suspend fun <T> cached(key: String, serializer: KSerializer<T>, load: suspend () -> T): T {
         val saved = store.read(key)
+        // Data no futuro (relógio do aparelho mudou) não conta como recente.
+        val age = saved?.let { now() - it.savedAtEpochMillis }
+        if (saved != null && age != null && age >= 0 && age < freshFor.inWholeMilliseconds) {
+            return json.decodeFromString(serializer, saved.json)
+        }
         val value = try {
             load()
         } catch (e: AppError) {
