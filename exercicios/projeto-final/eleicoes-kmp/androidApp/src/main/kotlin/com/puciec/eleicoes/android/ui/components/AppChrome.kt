@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,8 +56,8 @@ private fun formatDateTime(epochMillis: Long): String =
 /** Menu "⋮" da barra superior. */
 @Composable
 fun AppMenu(
-    @Suppress("UNUSED_PARAMETER") themePreference: ThemePreference,
-    @Suppress("UNUSED_PARAMETER") onThemeChange: (ThemePreference) -> Unit,
+    themePreference: ThemePreference,
+    onThemeChange: (ThemePreference) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
@@ -65,8 +67,18 @@ fun AppMenu(
             Icon(Icons.Filled.MoreVert, contentDescription = "Mais opções")
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            // TODO(#13): itens Sistema / Claro / Escuro com themePreference e onThemeChange,
-            // gravando a escolha no aparelho.
+            ThemePreference.entries.forEach { option ->
+                val selected = option == themePreference
+                DropdownMenuItem(
+                    text = { Text("Tema: ${option.label}") },
+                    leadingIcon = { if (selected) Icon(Icons.Filled.Check, contentDescription = null) },
+                    onClick = {
+                        expanded = false
+                        onThemeChange(option)
+                    },
+                )
+            }
+            HorizontalDivider()
             DropdownMenuItem(
                 text = { Text("Fonte dos dados") },
                 leadingIcon = { Icon(Icons.Filled.Info, contentDescription = null) },
