@@ -13,11 +13,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/** Escolha de tema. O #13 grava no aparelho e põe a troca no menu da barra superior. */
+/** Escolha de tema, gravada no aparelho por [ThemeStore] e trocada pelo menu da barra superior. */
 enum class ThemePreference(val label: String) {
     SYSTEM("Sistema"),
     LIGHT("Claro"),
     DARK("Escuro"),
+    ;
+
+    companion object {
+        /** Valor gravado inválido ou ausente cai em [SYSTEM], em vez de quebrar o app. */
+        fun fromStorage(raw: String?): ThemePreference =
+            entries.firstOrNull { it.name == raw } ?: SYSTEM
+    }
 }
 
 /** Espaçamentos do app: use estes valores em vez de números soltos. */

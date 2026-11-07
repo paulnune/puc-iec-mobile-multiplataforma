@@ -70,7 +70,7 @@ private fun EleicoesScaffold(container: AppContainer) {
                 actions = {
                     AppMenu(
                         themePreference = themePreference,
-                        onThemeChange = { container.themePreference.value = it },
+                        onThemeChange = { container.setThemePreference(it) },
                     )
                 },
             )
