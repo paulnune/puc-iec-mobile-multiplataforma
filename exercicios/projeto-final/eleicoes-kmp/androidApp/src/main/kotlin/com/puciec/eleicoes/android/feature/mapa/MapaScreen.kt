@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -75,6 +76,9 @@ private val OFFICES = listOf(Office.PRESIDENT to "Presidente", Office.GOVERNOR t
 
 /** Altura da lista "Estados": cerca de 8 linhas, com rolagem própria, como no site. */
 private val STATES_LIST_HEIGHT = 440.dp
+
+/** Em paisagem a tela útil tem ~250 dp: a lista fica com no máximo metade da altura, para não prender a rolagem (#11). */
+private const val STATES_LIST_MAX_SCREEN_FRACTION = 0.5f
 
 @Composable
 fun MapaScreen(viewModel: MapaViewModel) {
@@ -145,7 +149,9 @@ private fun MapaContent(overview: MapaOverview, onPlaceClick: (String) -> Unit) 
 
     Text("Estados", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
     Spacer(Modifier.height(Spacing.s))
-    Column(Modifier.heightIn(max = STATES_LIST_HEIGHT).verticalScroll(rememberScrollState())) {
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val listHeight = minOf(STATES_LIST_HEIGHT, screenHeight * STATES_LIST_MAX_SCREEN_FRACTION)
+    Column(Modifier.heightIn(max = listHeight).verticalScroll(rememberScrollState())) {
         overview.states.forEach { place ->
             PlaceRow(label = placeLabel(place.code), place = place, onClick = { onPlaceClick(place.code) })
         }
@@ -194,12 +200,12 @@ private fun PlaceRow(label: String, place: PlaceResult, onClick: () -> Unit) {
         PartyDot(leader.partyAcronym)
         Spacer(Modifier.size(Spacing.m))
         Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
                 "${leader.ballotName.orEmpty().toNameProse()} · ${leader.partyAcronym.orEmpty()}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         }
