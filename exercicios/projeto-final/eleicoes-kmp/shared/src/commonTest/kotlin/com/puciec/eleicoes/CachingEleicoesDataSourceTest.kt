@@ -16,6 +16,7 @@ import com.puciec.eleicoes.data.dto.WealthChangeDto
 import com.puciec.eleicoes.data.source.EleicoesDataSource
 import com.puciec.eleicoes.domain.filter.CandidateFilter
 import com.puciec.eleicoes.domain.model.AppError
+import com.puciec.eleicoes.domain.model.DataStatus
 import com.puciec.eleicoes.domain.model.Office
 import com.puciec.eleicoes.domain.model.PlaceScope
 import com.puciec.eleicoes.domain.model.WealthSort
@@ -192,5 +193,36 @@ class CachingEleicoesDataSourceTest {
         assertNotEquals(filter.offices.toList(), reordered.offices.toList())
         cache.listCandidates(reordered, page = 1, limit = 30)
         assertEquals(6, store.entries.size, "conjuntos em outra ordem")
+    }
+
+    @Test
+    fun `status comeca Live`() {
+        assertEquals(DataStatus.Live, cache.status.value)
+    }
+
+    @Test
+    fun `fallback publica Cached com a hora salva`() = runTest {
+        cache.getParty("p13")
+        clock = start + 2 * day
+        source.error = AppError.Server("HTTP 500")
+
+        cache.getParty("p13")
+
+        assertEquals(DataStatus.Cached(savedAtEpochMillis = start), cache.status.value)
+    }
+
+    @Test
+    fun `resposta ao vivo volta a publicar Live`() = runTest {
+        cache.getParty("p13")
+        clock = start + 2 * day
+        source.error = AppError.NoConnection
+        cache.getParty("p13")
+        assertEquals(DataStatus.Cached(savedAtEpochMillis = start), cache.status.value)
+
+        source.error = null
+        clock += day
+        cache.getCandidate("outra-consulta")
+
+        assertEquals(DataStatus.Live, cache.status.value)
     }
 }

@@ -11,9 +11,13 @@ import com.puciec.eleicoes.data.dto.WealthChangeDto
 import com.puciec.eleicoes.data.source.EleicoesDataSource
 import com.puciec.eleicoes.domain.filter.CandidateFilter
 import com.puciec.eleicoes.domain.model.AppError
+import com.puciec.eleicoes.domain.model.DataStatus
 import com.puciec.eleicoes.domain.model.Office
 import com.puciec.eleicoes.domain.model.PlaceScope
 import com.puciec.eleicoes.domain.model.WealthSort
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -30,6 +34,11 @@ class CachingEleicoesDataSource(
     private val now: () -> Long,
     private val json: Json = EleicoesJson,
 ) : EleicoesDataSource {
+
+    private val _status = MutableStateFlow<DataStatus>(DataStatus.Live)
+
+    /** De onde veio a última resposta: ao vivo, ou do disco por causa de uma falha (com a hora salva). */
+    val status: StateFlow<DataStatus> = _status.asStateFlow()
 
     override suspend fun listCandidates(filter: CandidateFilter, page: Int, limit: Int): PageDto<CandidateDto> =
         cached("listCandidates|${filter.key()}|$page|$limit", PageDto.serializer(CandidateDto.serializer())) {
@@ -91,10 +100,13 @@ class CachingEleicoesDataSource(
         val value = try {
             load()
         } catch (e: AppError) {
-            if (e.usesCache() && saved != null) return json.decodeFromString(serializer, saved.json)
-            throw e
+            if (!e.usesCache() || saved == null) throw e
+            val fallback = json.decodeFromString(serializer, saved.json)
+            _status.value = DataStatus.Cached(saved.savedAtEpochMillis)
+            return fallback
         }
         store.write(key, CachedResponse(json.encodeToString(serializer, value), now()))
+        _status.value = DataStatus.Live
         return value
     }
 }
