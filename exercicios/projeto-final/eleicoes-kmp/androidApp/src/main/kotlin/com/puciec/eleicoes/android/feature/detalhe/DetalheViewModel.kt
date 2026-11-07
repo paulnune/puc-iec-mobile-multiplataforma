@@ -11,6 +11,8 @@ import com.puciec.eleicoes.android.ui.state.loadState
 import com.puciec.eleicoes.data.repository.CandidatesRepository
 import com.puciec.eleicoes.domain.colinha.replace
 import com.puciec.eleicoes.domain.colinha.toggleInColinha
+import com.puciec.eleicoes.domain.detalhe.AssetSummary
+import com.puciec.eleicoes.domain.detalhe.summarize
 import com.puciec.eleicoes.domain.favorites.FavoriteCandidate
 import com.puciec.eleicoes.domain.favorites.FavoritesRepository
 import com.puciec.eleicoes.domain.favorites.isFavorite
@@ -39,13 +41,19 @@ class DetalheViewModel(
     private val _pendingAdd = MutableStateFlow<PendingColinhaAdd?>(null)
     val pendingAdd: StateFlow<PendingColinhaAdd?> = _pendingAdd.asStateFlow()
 
-    // TODO(#3): bens declarados (candidates.assets) e o perfil completo.
+    /** Bens declarados, somados e agrupados por tipo. Carregam à parte: um erro aqui não derruba o cabeçalho. */
+    private val _assets = MutableStateFlow<UiState<AssetSummary>>(UiState.Loading)
+    val assets: StateFlow<UiState<AssetSummary>> = _assets.asStateFlow()
 
     init {
         load()
+        loadAssets()
     }
 
-    fun retry() = load()
+    fun retry() {
+        load()
+        loadAssets()
+    }
 
     fun toggleFavorite() {
         val current = (_candidate.value as? UiState.Success)?.data ?: return
@@ -73,7 +81,27 @@ class DetalheViewModel(
         }
     }
 
+    /** Busca todas as páginas de bens (até [MAX_ASSET_PAGES]) e resume. Lista vazia vira "não declarou bens". */
+    private fun loadAssets() {
+        _assets.value = UiState.Loading
+        viewModelScope.launch {
+            _assets.value = loadState(isEmpty = { it.assets.isEmpty() }) {
+                val first = candidates.assets(candidateId, page = 1)
+                val items = first.items.toMutableList()
+                var page = first
+                while (page.hasNext && page.page < MAX_ASSET_PAGES) {
+                    page = candidates.assets(candidateId, page = page.page + 1)
+                    items += page.items
+                }
+                items.summarize(declaredCount = first.total)
+            }
+        }
+    }
+
     companion object {
+        /** Teto de páginas de bens (50 por página): protege o limite de 60 req/min da chave. */
+        const val MAX_ASSET_PAGES = 10
+
         fun factory(candidateId: String, container: AppContainer) = viewModelFactory {
             initializer { DetalheViewModel(candidateId, container.candidatesRepository, container.favoritesRepository) }
         }
