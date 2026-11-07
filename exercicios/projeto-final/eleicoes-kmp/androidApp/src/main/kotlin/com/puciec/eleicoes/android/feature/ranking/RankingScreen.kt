@@ -51,7 +51,16 @@ fun RankingScreen(viewModel: RankingViewModel, onCandidateClick: (Candidate) -> 
                 if (visible.isEmpty()) {
                     EmptyState(title = "Nenhum candidato com esse nome", message = "Tente outro nome ou limpe a busca.")
                 } else {
-                    RankingList(candidates = visible, onCandidateClick = onCandidateClick)
+                    RankingList(
+                        candidates = visible,
+                        onCandidateClick = onCandidateClick,
+                        isLoadingMore = state.isLoadingMore,
+                        endReached = state.endReached,
+                        loadMoreError = state.loadMoreError,
+                        // Com busca ativa a lista é curta: paginar sozinho varreria a API inteira.
+                        autoLoadMore = state.searchText.isBlank(),
+                        onLoadMore = viewModel::loadMore,
+                    )
                 }
             }
         }
