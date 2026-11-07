@@ -6,10 +6,13 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.puciec.eleicoes.android.AppContainer
 import com.puciec.eleicoes.android.ui.state.UiState
-import com.puciec.eleicoes.android.ui.state.loadState
+import com.puciec.eleicoes.android.ui.state.toAppError
 import com.puciec.eleicoes.data.repository.CandidatesRepository
 import com.puciec.eleicoes.domain.filter.CandidateFilter
+import com.puciec.eleicoes.domain.model.AppError
 import com.puciec.eleicoes.domain.model.Candidate
+import com.puciec.eleicoes.domain.paging.PagedList
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,8 +25,14 @@ data class RankingUiState(
     val filter: CandidateFilter = CandidateFilter(),
     /** Texto da busca (#4): filtra no aparelho, sem nova consulta. */
     val searchText: String = "",
+    /** Primeira página: carregando, erro, vazio ou a lista já acumulada. */
     val candidates: UiState<List<Candidate>> = UiState.Loading,
-    // TODO(#2): paginação (página atual, "carregando mais" e fim da lista).
+    /** Paginação infinita (#2). */
+    val isLoadingMore: Boolean = false,
+    val loadMoreError: AppError? = null,
+    val endReached: Boolean = false,
+    /** Total de candidaturas no filtro, quando a API informa. */
+    val total: Int? = null,
 )
 
 /**
@@ -34,6 +43,7 @@ class RankingViewModel(private val repository: CandidatesRepository) : ViewModel
     private val _state = MutableStateFlow(RankingUiState())
     val state: StateFlow<RankingUiState> = _state.asStateFlow()
 
+    private var paged = PagedList<Candidate>()
     private var loadJob: Job? = null
 
     init {
@@ -54,13 +64,57 @@ class RankingViewModel(private val repository: CandidatesRepository) : ViewModel
 
     fun retry() = load()
 
+    /** Próxima página: a lista chama quando o usuário chega perto do fim (#2). */
+    fun loadMore() {
+        val current = _state.value
+        if (current.isLoadingMore || current.endReached || current.candidates !is UiState.Success) return
+        val filter = current.filter
+        val nextPage = paged.nextPage
+        _state.update { it.copy(isLoadingMore = true, loadMoreError = null) }
+        loadJob = viewModelScope.launch {
+            try {
+                val page = repository.ranking(filter, page = nextPage)
+                paged = paged.append(page) { it.id }
+                _state.update {
+                    it.copy(
+                        candidates = UiState.Success(paged.items),
+                        isLoadingMore = false,
+                        endReached = paged.endReached,
+                        total = page.total ?: it.total,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingMore = false, loadMoreError = e.toAppError()) }
+            }
+        }
+    }
+
+    /** Primeira página do filtro atual; descarta o que estava carregado. */
     private fun load() {
         loadJob?.cancel()
+        paged = PagedList()
         val filter = _state.value.filter
-        _state.update { it.copy(candidates = UiState.Loading) }
+        _state.update {
+            it.copy(candidates = UiState.Loading, isLoadingMore = false, loadMoreError = null, endReached = false, total = null)
+        }
         loadJob = viewModelScope.launch {
-            val result = loadState { repository.ranking(filter, page = 1).items }
-            _state.update { it.copy(candidates = result) }
+            try {
+                val page = repository.ranking(filter, page = 1)
+                paged = paged.append(page) { it.id }
+                _state.update {
+                    it.copy(
+                        candidates = if (paged.items.isEmpty()) UiState.Empty() else UiState.Success(paged.items),
+                        endReached = paged.endReached,
+                        total = page.total,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(candidates = UiState.Error(e.toAppError())) }
+            }
         }
     }
 
