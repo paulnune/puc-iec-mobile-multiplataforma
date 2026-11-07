@@ -30,6 +30,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.puciec.eleicoes.android.AppContainer
+import com.puciec.eleicoes.android.feature.colinha.ColinhaAddDialog
 import com.puciec.eleicoes.android.navigation.DetalheRoute
 import com.puciec.eleicoes.android.ui.components.CandidatePhoto
 import com.puciec.eleicoes.android.ui.components.EmptyState
@@ -58,6 +59,11 @@ fun NavGraphBuilder.detalheGraph(
 fun DetalheScreen(viewModel: DetalheViewModel) {
     val state by viewModel.candidate.collectAsStateWithLifecycle()
     val isFavorite by viewModel.isFavorite.collectAsStateWithLifecycle()
+    val pendingAdd by viewModel.pendingAdd.collectAsStateWithLifecycle()
+
+    pendingAdd?.let {
+        ColinhaAddDialog(it, onReplace = viewModel::confirmColinhaReplace, onDismiss = viewModel::dismissColinhaPrompt)
+    }
 
     when (val candidate = state) {
         UiState.Loading -> LoadingShimmer(rows = 3)

@@ -5,13 +5,16 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.puciec.eleicoes.android.AppContainer
+import com.puciec.eleicoes.android.feature.colinha.PendingColinhaAdd
 import com.puciec.eleicoes.android.ui.state.UiState
 import com.puciec.eleicoes.android.ui.state.loadState
 import com.puciec.eleicoes.data.repository.CandidatesRepository
+import com.puciec.eleicoes.domain.colinha.replace
+import com.puciec.eleicoes.domain.colinha.toggleInColinha
+import com.puciec.eleicoes.domain.favorites.FavoriteCandidate
 import com.puciec.eleicoes.domain.favorites.FavoritesRepository
 import com.puciec.eleicoes.domain.favorites.isFavorite
 import com.puciec.eleicoes.domain.favorites.toFavorite
-import com.puciec.eleicoes.domain.favorites.toggle
 import com.puciec.eleicoes.domain.model.Candidate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +35,10 @@ class DetalheViewModel(
     val isFavorite: StateFlow<Boolean> = favorites.isFavorite(candidateId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    /** ★ que esbarrou numa regra da colinha (cargo cheio, outra UF): a tela pergunta o que fazer. */
+    private val _pendingAdd = MutableStateFlow<PendingColinhaAdd?>(null)
+    val pendingAdd: StateFlow<PendingColinhaAdd?> = _pendingAdd.asStateFlow()
+
     // TODO(#3): bens declarados (candidates.assets) e o perfil completo.
 
     init {
@@ -42,7 +49,21 @@ class DetalheViewModel(
 
     fun toggleFavorite() {
         val current = (_candidate.value as? UiState.Success)?.data ?: return
-        viewModelScope.launch { favorites.toggle(current.toFavorite()) }
+        val favorite = current.toFavorite()
+        viewModelScope.launch {
+            favorites.toggleInColinha(favorite)?.let { _pendingAdd.value = PendingColinhaAdd(favorite, it) }
+        }
+    }
+
+    /** O usuário aceitou tirar [toRemove] para o candidato entrar na colinha. */
+    fun confirmColinhaReplace(toRemove: List<FavoriteCandidate>) {
+        val pending = _pendingAdd.value ?: return
+        _pendingAdd.value = null
+        viewModelScope.launch { favorites.replace(toRemove, pending.candidate) }
+    }
+
+    fun dismissColinhaPrompt() {
+        _pendingAdd.value = null
     }
 
     private fun load() {

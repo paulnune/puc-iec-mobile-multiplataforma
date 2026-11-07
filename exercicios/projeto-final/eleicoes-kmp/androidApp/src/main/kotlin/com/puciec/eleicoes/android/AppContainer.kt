@@ -2,6 +2,7 @@ package com.puciec.eleicoes.android
 
 import android.content.Context
 import com.puciec.eleicoes.ApiConfig
+import com.puciec.eleicoes.android.feature.colinha.DataStoreFavoritesRepository
 import com.puciec.eleicoes.android.ui.theme.ThemePreference
 import com.puciec.eleicoes.android.ui.theme.ThemeStore
 import com.puciec.eleicoes.data.repository.CandidatesRepository
@@ -11,7 +12,6 @@ import com.puciec.eleicoes.data.repository.ResultsRepository
 import com.puciec.eleicoes.data.source.EleicoesDataSource
 import com.puciec.eleicoes.data.source.createEleicoesDataSource
 import com.puciec.eleicoes.domain.favorites.FavoritesRepository
-import com.puciec.eleicoes.domain.favorites.InMemoryFavoritesRepository
 import com.puciec.eleicoes.domain.model.DataStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,8 +40,8 @@ class AppContainer(context: Context) {
     val resultsRepository = ResultsRepository(dataSource)
     val evolucaoRepository = EvolucaoRepository(candidatesRepository)
 
-    /** Em memória: some ao fechar o app. O #5 troca pela implementação com DataStore. */
-    val favoritesRepository: FavoritesRepository = InMemoryFavoritesRepository()
+    /** Colinha gravada no aparelho com DataStore (#5): sobrevive a fechar o app. */
+    val favoritesRepository: FavoritesRepository = DataStoreFavoritesRepository(appContext)
 
     /** Escopo dos processos de fundo do container (gravar a escolha de tema). Vive com o processo. */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
