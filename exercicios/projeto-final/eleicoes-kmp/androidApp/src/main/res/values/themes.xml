@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema da janela antes do Compose desenhar. O visual do app está em ui/theme. O #13 troca por Theme.SplashScreen. -->
+    <style name="Theme.Eleicoes" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
