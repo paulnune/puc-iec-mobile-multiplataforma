@@ -30,7 +30,7 @@ na sua branch, com o seu PR.
    gh pr create --base projeto-final
    ```
 
-6. No PR: `Closes #<número da issue>`, um print da tela e o que você testou. Peça revisão a quem a issue sugere.
+6. No PR: `Closes #<número da issue>`, um print da tela e o que você testou. Qualquer outro integrante do grupo pode aprovar.
 7. O merge exige 1 aprovação e o CI verde. Use **Create a merge commit**, não squash: assim os commits de cada um
    continuam no histórico.
 
