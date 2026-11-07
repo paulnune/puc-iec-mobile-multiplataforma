@@ -55,8 +55,8 @@ fun RankingList(
         }
     }
     // candidates.size na chave: se a página nova trouxe poucos itens e o fim continua à vista, pede a seguinte.
-    LaunchedEffect(nearEnd, candidates.size, autoLoadMore, endReached, loadMoreError) {
-        if (nearEnd && autoLoadMore && !endReached && loadMoreError == null) onLoadMore()
+    LaunchedEffect(nearEnd, candidates.size, autoLoadMore, endReached, loadMoreError, isLoadingMore) {
+        if (nearEnd && autoLoadMore && !endReached && loadMoreError == null && !isLoadingMore) onLoadMore()
     }
 
     LazyColumn(
