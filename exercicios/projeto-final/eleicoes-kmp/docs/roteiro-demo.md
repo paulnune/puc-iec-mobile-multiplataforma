@@ -2,7 +2,7 @@
 
 Apresentação na Aula 6, segunda 09/11: **até 20 minutos, já contando as perguntas**. Cada integrante mostra e explica a própria feature.
 
-Primeira versão, parte da issue #9. Os blocos seguem os critérios de aceite das issues. Quando a sua feature entrar, ajuste o seu bloco ao que a tela faz de verdade. O ensaio de domingo acerta os tempos.
+Versão para o ensaio de domingo (08/11), parte da issue #9. Cada bloco foi conferido com o código integrado na `projeto-final`. Se algo mudar no ensaio, o dono ajusta o próprio bloco.
 
 ## Linha do tempo
 
@@ -53,19 +53,21 @@ Passa a vez: volta ao topo da lista.
 Mostrar:
 - Um chip (de cargo ou Mulheres) e uma UF: a lista recarrega, e o Hall da Fama mostra os 3 maiores patrimônios do filtro.
 - Busca sem acento que encontra um nome com acento.
+- Um nome que não está nas páginas carregadas, como o do print `f3-f4-busca-cadu.png`: ele aparece depois da consulta ao servidor.
 - Uma busca sem resultado: "Nenhum candidato com esse nome".
 
 Explicar:
-- O chip vira parâmetro real da API (`office`, `gender`, `state`) no `CandidateFilter`. A busca filtra a lista já carregada, com debounce.
-- O teste: do chip aos parâmetros, e o filtro de texto.
+- O chip vira parâmetro real da API (`office`, `gender`, `state`) no `CandidateFilter`.
+- A busca é local primeiro, com debounce de 300 ms. Se o texto não acha ninguém na lista já carregada, a consulta é refeita com `q` no servidor, e apagar o texto tira o `q` e recarrega o filtro.
+- O teste: do chip aos parâmetros, o filtro de texto sem acento e a passagem da busca local para a do servidor (`RankingViewModelTest`).
 
 Passa a vez: limpa a busca e deixa na tela o filtro combinado para o bloco 3.
 
 ### 3. Detalhe (F2) · José Ricardo · 1:30
 
 Mostrar:
-- Tocar num candidato do Hall da Fama. Aparecem o resultado (desfecho, votos e %), o perfil e os bens declarados, com o total.
-- Tocar na ★ para pôr o candidato na colinha.
+- Tocar no 1º candidato da lista, logo abaixo do cabeçalho: é o mesmo que lidera o Hall da Fama, cujos cartões não abrem o Detalhe. Aparecem o resultado (desfecho, votos e %), o perfil e os bens declarados, com o total.
+- Tocar na ★ para pôr o candidato na colinha. Se o cargo dele já estiver ocupado na colinha, o app pergunta se troca.
 
 Explicar:
 - Os dados vêm de `get_candidate` e `list_candidate_assets`, pelo `CandidatesRepository`. A tela só observa o `UiState`.
@@ -104,7 +106,7 @@ Passa a vez: abre a aba Mapa.
 ### 6. Mapa (F6) e modo offline (#12) · Rodrigo · 1:45
 
 Mostrar:
-- O resumo nacional (líder × 2º colocado, diferença e % apurado) e a grade de UFs, colorida por quem lidera. Tocar numa UF.
+- O resumo nacional (líder × 2º colocado, diferença e % das seções apuradas) e a grade de UFs, colorida por quem lidera. Tocar numa UF.
 - Alternar para Governador.
 - Ligar o modo avião e abrir a UF aquecida antes da aula que ainda não apareceu na demo. Os dados vêm do disco, com a faixa "Sem conexão: dados de <data e hora>".
 - Ainda sem rede, abrir a UF combinada que não foi aquecida: aparece um erro claro, com "Tentar de novo". Desligar o modo avião e tocar em "Tentar de novo".
@@ -135,14 +137,27 @@ Mostrar uma tela só, sem abrir a IDE: o diagrama de camadas do README e a tabel
 
 Explicar:
 - O caminho do dado: tela → ViewModel (StateFlow) → repositório → porta `EleicoesDataSource` → API. Nenhum composable faz fetch.
-- O ADR: por que KMP, ViewModel + StateFlow e o MCP no lugar da REST, e as alternativas descartadas.
-- Os testes rodam no `commonTest`, sem rede. O CI builda e testa cada PR, e o merge exige a aprovação de outro integrante.
+- O ADR: por que KMP, ViewModel + StateFlow e o MCP no lugar da REST, e as alternativas descartadas. No fim do trabalho, o grupo viabilizou o iOS para a lógica (#26); a interface no iPhone é o próximo passo.
+- Os testes: 231 casos, 169 deles no `commonTest` do `shared`, que rodam sem rede, no Android e num simulador de iPhone. O CI builda e testa cada PR, e o merge exige a aprovação de outro integrante.
+
+Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de 08/11, antes dos PRs de documentação. Refaça na segunda com `git shortlog -sn --no-merges origin/projeto-final -- exercicios/projeto-final/eleicoes-kmp .github/workflows/pf-eleicoes-kmp.yml`.
+
+| Integrante | Issues | PRs integrados | Commits |
+|---|---|---|---|
+| Paulo | #1, #2, #9, #26 | #14, #15, #27 | 10 |
+| José Ricardo | #3, #8 | #24, #25 | 14 |
+| Diego | #4, #10 | #23 | 2 |
+| Natan | #5, #11 | #21, #22 | 17 |
+| Rodrigo | #6, #12 | #17, #18 | 18 |
+| Gabriel | #7, #13 | #19, #20 | 8 |
 
 ## Perguntas prováveis
 
 | Pergunta | Quem responde | Onde está a resposta |
 |---|---|---|
 | Por que KMP e não Flutter ou React Native? | Paulo | `ADR.md` |
+| A UI é só Android. O que é multiplataforma aqui? Por que não Compose Multiplatform, como na A5? | Paulo | `ADR.md`: a lógica roda nas duas plataformas, e os 169 testes do `commonTest` passam num simulador de iPhone (abrir o PR #27 e mostrar o check verde). O grupo testou as 8 telas no Android dentro do prazo e viabilizou o iOS no fim, começando pela lógica. A UI em Compose Multiplatform é o próximo passo |
+| A busca só acha quem já foi carregado? | Diego | Não. Ela procura primeiro na lista carregada, sem chamar a API, e só refaz a consulta com `q` no servidor quando não acha ninguém (`RankingViewModel.onSearchTextChange`). Cargo, gênero e UF vão sempre para a API |
 | Onde fica o estado? O que acontece ao girar a tela? | O dono da tela | No ViewModel da feature, que sobrevive à rotação |
 | Onde o app busca os dados? Tem fetch na tela? | Paulo | Não tem: a tela só lê o estado e chama o ViewModel. A chamada sai do repositório (`RankingScreen` é o exemplo) |
 | Por que o MCP e não a REST? E se a API mudar? | Paulo | `shared/.../data/source/` e `ADR.md` |
@@ -166,7 +181,8 @@ Explicar:
 ## Antes da aula
 
 Domingo, na reunião da #9:
-- [ ] Features na `projeto-final` e build num clone novo.
+- [x] Features na `projeto-final`: as 8, mais UX e cache offline, com o CI verde num checkout limpo.
+- [ ] Build seguindo o README do zero, num clone novo (#10).
 - [ ] Ensaio cronometrado com todos, seguindo este roteiro. Quem passar do tempo corta.
 - [ ] Combinar:
   - quem opera o aparelho;
@@ -174,7 +190,7 @@ Domingo, na reunião da #9:
   - os favoritos que a colinha já terá, deixando livre o cargo do candidato do bloco 3;
   - as duas UFs do bloco 6, uma aquecida e uma sem aquecer;
   - se a demo segue no tema escuro depois do bloco 5.
-- [ ] Pôr no bloco 8 os números finais: testes, PRs e commits por pessoa.
+- [x] Pôr no bloco 8 os números finais: testes, PRs e commits por pessoa.
 - [ ] Atualizar este roteiro com o que mudou no ensaio.
 
 Segunda, antes da aula:
