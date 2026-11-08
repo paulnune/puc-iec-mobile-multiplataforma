@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +38,7 @@ import com.puciec.eleicoes.android.ui.components.ErrorState
 import com.puciec.eleicoes.android.ui.components.LoadingShimmer
 import com.puciec.eleicoes.android.ui.components.OutcomeBadge
 import com.puciec.eleicoes.android.ui.components.subtitle
+import com.puciec.eleicoes.android.ui.components.StarBorder
 import com.puciec.eleicoes.android.ui.state.UiState
 import com.puciec.eleicoes.android.ui.theme.Spacing
 import com.puciec.eleicoes.domain.detalhe.AssetSummary
@@ -103,7 +103,7 @@ private fun DetalheContent(
             .padding(Spacing.l),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CandidatePhoto(candidate.photoUrl, candidate.ballotName, size = 88.dp)
+            CandidatePhoto(candidate.photoUrl, candidate.ballotName, size = 88.dp, decorative = true)
             Spacer(Modifier.width(Spacing.l))
             Column(Modifier.weight(1f)) {
                 Text(candidate.ballotName.toTitleCase(), style = MaterialTheme.typography.headlineSmall)
@@ -125,7 +125,7 @@ private fun DetalheContent(
             }
             IconButton(onClick = onToggleFavorite) {
                 Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                    imageVector = if (isFavorite) Icons.Filled.Star else StarBorder,
                     contentDescription = if (isFavorite) "Remover da colinha" else "Adicionar à colinha",
                     tint = MaterialTheme.colorScheme.secondary,
                 )

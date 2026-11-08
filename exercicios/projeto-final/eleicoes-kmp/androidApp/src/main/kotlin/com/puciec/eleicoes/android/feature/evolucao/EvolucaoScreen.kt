@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -32,6 +33,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,8 +57,16 @@ import com.puciec.eleicoes.domain.mapa.Ufs
 import com.puciec.eleicoes.domain.model.Filing
 import kotlin.math.roundToInt
 
-/** Cor do ganho: verde do site; a perda usa a cor de erro do tema. */
-private val GainColor = Color(0xFF2E7D32)
+/**
+ * Cor do ganho: verde do site no tema claro. No escuro esse verde fica em ~3,3:1 sobre o fundo; o verde
+ * claro passa de 4,5:1 (#11). A perda usa a cor de erro do tema, que já é legível nos dois.
+ */
+internal val GainColorLight = Color(0xFF2E7D32)
+internal val GainColorDark = Color(0xFF81C784)
+
+@Composable
+private fun gainColor(): Color =
+    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) GainColorDark else GainColorLight
 
 fun NavGraphBuilder.evolucaoGraph(
     @Suppress("UNUSED_PARAMETER") navController: NavController,
@@ -175,8 +187,10 @@ private fun Ranking(
             Row(
                 Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp) // alvo de toque mínimo (#11)
                     .clickable { onSelect(item.candidate.id) }
                     .padding(vertical = Spacing.s),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(item.candidate.ballotName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(Spacing.s))
@@ -211,7 +225,7 @@ private fun RankingRow(item: CandidateEvolucao, onClick: () -> Unit) {
                 Money.signedCompact(delta),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (delta >= 0) GainColor else MaterialTheme.colorScheme.error,
+                color = if (delta >= 0) gainColor() else MaterialTheme.colorScheme.error,
             )
             Text(
                 ratioLabel(variation.ratio),
@@ -248,7 +262,10 @@ private fun TimelineSheet(item: CandidateEvolucao, onDismiss: () -> Unit) {
 @Composable
 private fun TimelineChart(timeline: List<Filing>, modifier: Modifier) {
     val lineColor = MaterialTheme.colorScheme.primary
-    Canvas(modifier) {
+    // O Canvas não tem texto: o TalkBack lê um resumo do gráfico (os valores estão na lista abaixo) (#11).
+    val description = "Gráfico do patrimônio declarado: " +
+        timeline.joinToString("; ") { "${it.year}, ${Money.compact(it.totalAssets)}" }
+    Canvas(modifier.semantics { contentDescription = description }) {
         val max = timeline.maxOfOrNull { it.totalAssets } ?: return@Canvas
         if (max <= 0.0) return@Canvas
         val points = timeline.mapIndexed { index, filing ->

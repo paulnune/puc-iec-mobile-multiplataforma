@@ -155,7 +155,7 @@ private fun HallCard(position: Int, candidate: Candidate) {
             }
             Spacer(Modifier.height(Spacing.m))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CandidatePhoto(candidate.photoUrl, candidate.ballotName, size = 48.dp)
+                CandidatePhoto(candidate.photoUrl, candidate.ballotName, size = 48.dp, decorative = true)
                 Spacer(Modifier.width(Spacing.s))
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -168,8 +168,6 @@ private fun HallCard(position: Int, candidate: Candidate) {
                         candidate.subtitle(),
                         style = MaterialTheme.typography.bodySmall,
                         color = onContainer,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
