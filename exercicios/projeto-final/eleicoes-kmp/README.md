@@ -1,69 +1,123 @@
 # Eleições 2026 — app KMP
 
-App Android em Kotlin Multiplatform com os dados públicos do TSE das eleições de 2026, servidos pela API
+App Android em Kotlin Multiplatform que mostra os dados públicos do TSE das eleições de 2026, servidos pela API
 [eleicoes.dev](https://eleicoes.dev). Projeto Final da disciplina Arquitetura de Aplicações Móveis e
 Multiplataforma (PUC Minas).
 
-> Versão do skeleton (issue #1). As features entram pelas issues #2 a #13. O README final, com os screenshots, é a issue #10.
+O app responde a perguntas como “quem declarou mais patrimônio?”, “quanto esse candidato ficou mais rico desde
+2006?” e “quem liderou o 1º turno em cada estado?”. As regras e a camada de dados ficam no módulo `shared`
+(Kotlin), e a interface é Compose com Material 3 no `androidApp`. As decisões de arquitetura e as alternativas
+descartadas estão no [ADR](ADR.md).
 
-## Telas
+## O que o app faz
 
-| Aba | O que mostra | Issue |
+| Tela | O que mostra |
+|---|---|
+| **Patrimônio** (aba) | Ranking dos candidatos pelo patrimônio declarado, com busca por nome e filtros por cargo, gênero e UF. O **Hall da Fama** destaca os 3 maiores patrimônios do filtro atual. |
+| **Detalhe** | Ao tocar num candidato: perfil, resultado da eleição e a lista de bens declarados, com o total. |
+| **Evolução** (aba) | Quanto o patrimônio do candidato mudou de uma eleição para outra, desde 2006. |
+| **Mapa** (aba) | Quem liderou o 1º turno no Brasil e em cada UF, com o total de votos e o percentual de seções apuradas. |
+| **Partidos** (aba) | Os partidos e os seus candidatos, com busca, contagem de candidaturas e recarga. |
+| **Colinha** (aba) | Os candidatos favoritos, na ordem da urna, salvos no aparelho para consultar depois. |
+
+Todas as telas tratam **carregando, vazio e erro/sem internet** — nunca ficam em branco. O app também tem tema
+claro/escuro, cache em disco para a demo funcionar offline e ajustes de acessibilidade (fonte grande e paisagem).
+
+## Screenshots
+
+| Patrimônio | Mapa | Partidos |
 |---|---|---|
-| Patrimônio | Ranking dos candidatos pelo patrimônio declarado, com busca e filtros por cargo, gênero e UF | #2, #4 |
-| Detalhe | Perfil, resultado e bens declarados de um candidato | #3 |
-| Evolução | Quanto o patrimônio mudou de uma eleição para outra, desde 2006 | #7 |
-| Mapa | Quem liderou o 1º turno no Brasil e em cada UF | #6 |
-| Partidos | Os partidos e os seus candidatos | #8 |
-| Colinha | Os candidatos favoritos, na ordem da urna, salvos no aparelho | #5 |
+| <img src="docs/screenshots/aba-patrimonio.png" width="260" alt="Aba Patrimônio: ranking, Hall da Fama e filtros"> | <img src="docs/screenshots/aba-mapa.png" width="260" alt="Aba Mapa: líder do 1º turno no Brasil e por UF"> | <img src="docs/screenshots/aba-partidos.png" width="260" alt="Aba Partidos: lista de partidos e contagem de candidaturas"> |
+
+Mais capturas das outras telas e dos estados de erro, cache e acessibilidade estão em
+[`docs/screenshots/`](docs/screenshots/).
 
 ## Como rodar
 
-Pré-requisitos: JDK 17 ou mais novo (testado com o 21) e Android SDK com a plataforma 36. O Android Studio já traz os dois.
+**Pré-requisitos**
 
-1. Pegue uma chave grátis em https://eleicoes.dev/dashboard.
-2. Crie um arquivo `.env` na raiz do repositório (ou nesta pasta), copiando o `.env.example`:
+- **JDK 17 ou mais novo.** O CI usa o 21; o build também foi validado com o 20.
+- **Android SDK** com a plataforma 36 e as build-tools instaladas. O Android Studio já traz os dois.
+- Um emulador ou celular Android (minSdk 24).
 
-   ```
-   ELEICOES_API_KEY=sua-chave
-   ```
+Se você não usa o Android Studio, aponte o SDK em `local.properties` (arquivo local, fora do git):
 
-   O `.env` está no `.gitignore`: nunca commite a chave. Também vale a variável de ambiente
-   `ELEICOES_API_KEY` ou `eleicoes.apiKey=...` no `local.properties`.
-3. Builde e rode os testes:
+```properties
+sdk.dir=/caminho/para/o/Android/sdk
+```
 
-   ```bash
-   cd exercicios/projeto-final/eleicoes-kmp
-   ./gradlew :androidApp:assembleDebug
-   ./gradlew :shared:testAndroidHostTest :androidApp:testDebugUnitTest
-   ```
+Ou exporte `ANDROID_HOME` antes de rodar o Gradle.
 
-4. Rode no emulador ou no celular: abra esta pasta no Android Studio e execute `androidApp`, ou instale o APK com
-   `adb install androidApp/build/outputs/apk/debug/androidApp-debug.apk`.
+**1. Clone o repositório e entre na pasta do app**
 
-Sem a chave o build passa, e o app mostra na tela como configurar.
+```bash
+git clone --branch projeto-final https://github.com/paulnune/puc-iec-mobile-multiplataforma.git
+cd puc-iec-mobile-multiplataforma/exercicios/projeto-final/eleicoes-kmp
+```
+
+**2. Pegue uma chave grátis e coloque no `.env`**
+
+Crie a chave em <https://eleicoes.dev/dashboard> e copie o exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Depois preencha o arquivo:
+
+```dotenv
+ELEICOES_API_KEY=sua-chave
+```
+
+O `.env` fica no `.gitignore`: **nunca commite a chave**. O build procura o arquivo nesta pasta ou em qualquer
+pasta acima até a raiz do repositório. Também vale exportar a variável `ELEICOES_API_KEY` ou colocar
+`eleicoes.apiKey=...` no `local.properties`.
+
+**3. Builde e rode os testes**
+
+```bash
+./gradlew :androidApp:assembleDebug :shared:testAndroidHostTest :androidApp:testDebugUnitTest
+```
+
+Os testes não usam a rede (as fontes são falsas), então rodam mesmo sem chave.
+
+**4. Rode no emulador ou no celular**
+
+Abra esta pasta no Android Studio e execute a configuração `androidApp`, ou instale o APK:
+
+```bash
+adb install androidApp/build/outputs/apk/debug/androidApp-debug.apk
+```
+
+Sem a chave o build passa, e o app mostra na tela como configurar. Com a chave, o limite da API é de 60
+requisições por minuto e 5.000 por dia.
 
 ## Arquitetura
 
 ```
 shared/                  KMP: dados e regras, sem dependência de Android
   data/source/           porta EleicoesDataSource e os adapters MCP (padrão) e REST
-  data/repository/       repositórios com cache em memória
-  domain/                modelos, formatação de dinheiro, filtros, favoritos
+  data/repository/       repositórios com cache em memória e em disco
+  domain/                modelos, formatação de dinheiro, filtros, favoritos e regras
 androidApp/              Compose com Material 3
   feature/<feature>/     uma pasta por feature: tela + ViewModel
   ui/                    tema, componentes e estados de tela compartilhados
 ```
 
-Fluxo: tela → ViewModel (StateFlow) → repositório → `EleicoesDataSource` → API. As decisões e as alternativas
-descartadas estão no [ADR](ADR.md).
+Fluxo: tela → ViewModel (StateFlow) → repositório → `EleicoesDataSource` → API. Nenhum fetch acontece dentro de
+composable. A injeção de dependência é manual, no `AppContainer`.
 
 ## Fonte dos dados
 
-API eleicoes.dev, com os dados públicos do TSE. Na semana da entrega a REST ignorava os filtros e devolvia erro 500,
-enquanto o servidor MCP da mesma API, com a mesma chave, funcionava. Por isso o app fala com o MCP, por trás de uma
-interface que permite voltar à REST sem mexer nas telas. O limite é de 60 requisições por minuto e 5.000 por dia
-por chave.
+Os dados são públicos, do **TSE**, e chegam pela API [eleicoes.dev](https://eleicoes.dev): patrimônio declarado,
+bens, resultados por candidato e por UF. O app não raspa os dados nem mantém uma base fixa no código; o cache em
+disco serve só para a demo continuar funcionando quando a rede cai.
+
+O acesso passa por uma porta (`EleicoesDataSource`) com dois adapters: **MCP** (o padrão) e **REST**. Na semana
+da entrega a REST da API ignorava os filtros e devolvia erro 500, enquanto o servidor **MCP** da mesma API, com a
+mesma chave, funcionava. Por isso o app fala com o MCP. O MCP é o protocolo que o eleicoes.dev expõe para agentes
+de IA; aqui ele é só o transporte, e a porta permite voltar à REST sem mexer em telas ou ViewModels. O detalhe
+está no [ADR](ADR.md).
 
 ## Como contribuir
 
