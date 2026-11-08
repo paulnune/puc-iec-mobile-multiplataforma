@@ -2,6 +2,7 @@ package com.puciec.eleicoes.android
 
 import android.app.Application
 import com.puciec.eleicoes.platform.AndroidContext
+import com.puciec.eleicoes.ui.AppContainer
 
 class EleicoesApplication : Application() {
     override fun onCreate() {
