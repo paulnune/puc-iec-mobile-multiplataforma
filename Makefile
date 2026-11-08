@@ -2,6 +2,7 @@
 # qualquer Linux (nativo ou WSL 2) e detecta sozinho o JDK 21 e o Android SDK.
 #
 #   make                 → ajuda
+#   make setup           → instala JDK 21, Android SDK, emulador e o resto (SETUP_ARGS='--yes --no-emulator')
 #   make check           → confere o ambiente
 #   make install         → compila, instala e abre o app (liga o emulador se preciso)
 #   make test            → todos os testes
@@ -13,10 +14,15 @@ SCRIPT := scripts/rodar-app.sh
 ARGS   ?=
 
 .DEFAULT_GOAL := help
-.PHONY: help check emulator stop phone rotate logs install open shot build test test-shared test-app ci reports clean
+SETUP_ARGS ?=
+
+.PHONY: help setup check emulator stop phone rotate logs install open shot build test test-shared test-app ci reports clean
 
 help:        ## Mostra a ajuda
 	@$(SCRIPT) help
+
+setup:       ## Instala o que faltar (JDK 21, Android SDK, emulador, AVD, libs, local.properties)
+	@$(SCRIPT) setup $(SETUP_ARGS)
 
 check:       ## Confere JDK 21, Android SDK, chave da API, KVM, janelas e bibliotecas do emulador
 	@$(SCRIPT) check

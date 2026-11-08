@@ -124,6 +124,176 @@ missing_emulator_libs() {
 
 has_device() { [ -x "$ADB" ] && "$ADB" devices | tail -n +2 | grep -q "device$"; }
 
+# ---------------------------------------------------------------- setup --
+# Instala o que falta para compilar e rodar o app. Idempotente: pula o que já existe.
+# Opções: --yes (não pergunta antes do sudo) e --no-emulator (só JDK + SDK, para usar o celular).
+SDK_PACKAGES=("platform-tools" "platforms;android-36" "build-tools;36.0.0")
+EMULATOR_PACKAGES=("emulator" "$AVD_IMAGE")
+
+as_root() { if [ "$(id -u)" = "0" ]; then "$@"; else sudo "$@"; fi; }
+
+# Pergunta antes de rodar algo com sudo (a menos que --yes). Sem terminal interativo, não roda.
+confirm() {
+  $ASSUME_YES && return 0
+  [ -t 0 ] || { warn "sem terminal para confirmar; rode de novo com --yes ou execute o comando acima"; return 1; }
+  local answer; read -r -p "  Executar agora? [s/N] " answer
+  [[ "$answer" =~ ^[sSyY] ]]
+}
+
+run_pkg_install() {
+  [ $# -gt 0 ] || return 0
+  [ -n "$PKG_MANAGER" ] || { fail "gerenciador de pacotes não reconhecido; instale manualmente: $*"; return 1; }
+  echo "    $(install_cmd "$*")"
+  confirm || return 1
+  case "$PKG_MANAGER" in
+    pacman)  as_root pacman -S --needed --noconfirm "$@" ;;
+    apt-get) as_root apt-get update -qq && DEBIAN_FRONTEND=noninteractive as_root apt-get install -y "$@" ;;
+    dnf)     as_root dnf install -y "$@" ;;
+    zypper)  as_root zypper --non-interactive install "$@" ;;
+  esac
+}
+
+jdk_package() {
+  case "$PKG_MANAGER" in
+    pacman) echo jdk21-openjdk ;; apt-get) echo openjdk-21-jdk-headless ;;
+    dnf | zypper) echo java-21-openjdk-devel ;;
+  esac
+}
+
+setup_jdk() {
+  if [ -n "$JDK" ]; then ok "JDK 21 já instalado ($JDK)"; return; fi
+  echo "→ Instalando o JDK 21…"
+  if command -v mise >/dev/null 2>&1; then
+    mise install java@temurin-21
+  elif [ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]; then
+    # shellcheck disable=SC1091
+    (set +u; . "$HOME/.sdkman/bin/sdkman-init.sh" && sdk install java 21-tem < /dev/null)
+  else
+    run_pkg_install "$(jdk_package)" || die "não foi possível instalar o JDK 21"
+  fi
+  JDK="$(find_jdk21)"
+  [ -n "$JDK" ] || die "o JDK 21 foi instalado mas não foi encontrado; defina JAVA_HOME_21 e rode de novo"
+  export JAVA_HOME="$JDK" PATH="$JDK/bin:$PATH"
+  ok "JDK 21 em $JDK"
+}
+
+setup_tools() {
+  local missing=()
+  command -v unzip >/dev/null 2>&1 || missing+=(unzip)
+  command -v curl >/dev/null 2>&1 || missing+=(curl)
+  [ ${#missing[@]} -eq 0 ] && return
+  echo "→ Faltam ferramentas para baixar o Android SDK: ${missing[*]}"
+  run_pkg_install "${missing[@]}" || die "instale ${missing[*]} e rode de novo"
+}
+
+sdkmanager_bin() { echo "$SDK/cmdline-tools/latest/bin/sdkmanager"; }
+
+setup_cmdline_tools() {
+  [ -x "$(sdkmanager_bin)" ] && { ok "Android cmdline-tools já instalados ($SDK)"; return; }
+  setup_tools
+  echo "→ Baixando as Android cmdline-tools para $SDK…"
+  local zip tmp
+  zip="$(curl -fsSL https://dl.google.com/android/repository/repository2-3.xml \
+    | grep -o 'commandlinetools-linux-[0-9]*_latest.zip' | sort -t- -k3 -n | tail -1)"
+  [ -n "$zip" ] || die "não foi possível descobrir a versão das cmdline-tools (sem internet?)"
+  tmp="$(mktemp -d)"
+  curl -fL --progress-bar -o "$tmp/clt.zip" "https://dl.google.com/android/repository/$zip"
+  unzip -q "$tmp/clt.zip" -d "$tmp"
+  mkdir -p "$SDK/cmdline-tools"
+  rm -rf "$SDK/cmdline-tools/latest"
+  mv "$tmp/cmdline-tools" "$SDK/cmdline-tools/latest"
+  rm -rf "$tmp"
+  ok "cmdline-tools em $SDK/cmdline-tools/latest"
+}
+
+setup_sdk_packages() {
+  local pkgs=("${SDK_PACKAGES[@]}") wanted=() p dir
+  $WITH_EMULATOR && pkgs+=("${EMULATOR_PACKAGES[@]}")
+  for p in "${pkgs[@]}"; do
+    dir="$SDK/${p//;//}"
+    [ -d "$dir" ] || wanted+=("$p")
+  done
+  if [ ${#wanted[@]} -eq 0 ]; then ok "pacotes do Android SDK já instalados"; return; fi
+  echo "→ Aceitando as licenças do Android SDK e instalando: ${wanted[*]}"
+  echo "  (as licenças: https://developer.android.com/studio/terms)"
+  yes 2>/dev/null | "$(sdkmanager_bin)" --sdk_root="$SDK" --licenses >/dev/null 2>&1 || true
+  # Mostra só o progresso dos downloads (o sdkmanager imprime avisos de "deprecated" e de métricas).
+  "$(sdkmanager_bin)" --sdk_root="$SDK" "${wanted[@]}" 2>&1 \
+    | grep -E '^https://dl\.google\.com|^Unzipping|[Ee]rror|[Ff]ailed' || true
+  ok "pacotes do Android SDK instalados"
+}
+
+setup_avd() {
+  $WITH_EMULATOR || return 0
+  if "$SDK/emulator/emulator" -list-avds 2>/dev/null | grep -qx "$AVD"; then ok "AVD $AVD já existe"; return; fi
+  echo "→ Criando o AVD $AVD (Pixel 7, Android 36)…"
+  echo no | "$SDK/cmdline-tools/latest/bin/avdmanager" create avd -n "$AVD" -k "$AVD_IMAGE" -d pixel_7 --force >/dev/null
+  ok "AVD $AVD criado"
+}
+
+setup_emulator_libs() {
+  $WITH_EMULATOR || return 0
+  local libs pkgs=() l
+  libs="$(missing_emulator_libs)"
+  if [ -z "$libs" ]; then ok "bibliotecas do emulador já instaladas"; return; fi
+  for l in $libs; do pkgs+=("$(resolve_package "$(lib_package "$l")")"); done
+  mapfile -t pkgs < <(printf '%s\n' "${pkgs[@]}" | sort -u)
+  echo "→ O emulador precisa de bibliotecas do sistema ($(echo $libs | wc -w) arquivos):"
+  if run_pkg_install "${pkgs[@]}"; then ok "bibliotecas do emulador instaladas"
+  else warn "bibliotecas não instaladas: o emulador não vai abrir até instalar (o celular continua funcionando)"; fi
+}
+
+setup_kvm() {
+  $WITH_EMULATOR || return 0
+  if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then ok "/dev/kvm acessível"; return; fi
+  if [ -e /dev/kvm ] && getent group kvm >/dev/null; then
+    echo "→ Seu usuário não tem acesso ao /dev/kvm (aceleração do emulador):"
+    echo "    sudo usermod -aG kvm $USER"
+    if confirm; then as_root usermod -aG kvm "$USER" && warn "entre de novo na sessão (ou 'newgrp kvm') para valer"; fi
+  else
+    warn "/dev/kvm ausente: o emulador fica lento ou não abre; use o celular (make phone) ou ative a virtualização"
+  fi
+}
+
+setup_local_properties() {
+  if grep -q "^sdk.dir=" "$APP/local.properties" 2>/dev/null; then ok "local.properties já existe"; return; fi
+  echo "sdk.dir=$SDK" >> "$APP/local.properties"
+  ok "local.properties criado (sdk.dir=$SDK)"
+}
+
+setup_env_key() {
+  if grep -q "^ELEICOES_API_KEY=." "$REPO/.env" 2>/dev/null || [ -n "${ELEICOES_API_KEY:-}" ]; then ok "chave da API configurada"; return; fi
+  warn "falta a chave da API (pessoal, não é instalada pelo script):"
+  echo "    1. crie uma grátis em https://eleicoes.dev/dashboard"
+  echo "    2. echo 'ELEICOES_API_KEY=<sua chave>' > $REPO/.env   (nunca commite)"
+}
+
+setup() {
+  ASSUME_YES=false; WITH_EMULATOR=true
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      -y | --yes) ASSUME_YES=true ;;
+      --no-emulator) WITH_EMULATOR=false ;;
+      *) die "opção desconhecida para setup: $arg (use --yes e/ou --no-emulator)" ;;
+    esac
+  done
+  echo "Setup em $DISTRO$($IS_WSL && echo ' (WSL 2)')${PKG_MANAGER:+ · pacotes: $PKG_MANAGER}$($WITH_EMULATOR || echo ' · sem emulador')"
+  $WITH_EMULATOR && echo "Primeira vez: ~2 GB de download (SDK + imagem do Android 36). Pode rodar de novo: pula o que já existe."
+  setup_jdk
+  setup_cmdline_tools
+  export ANDROID_HOME="$SDK"
+  setup_sdk_packages
+  ADB="$SDK/platform-tools/adb"
+  setup_avd
+  setup_emulator_libs
+  setup_kvm
+  setup_local_properties
+  setup_env_key
+  echo
+  check
+}
+
 # ------------------------------------------------------------- comandos --
 check() {
   echo "Sistema: $DISTRO$($IS_WSL && echo ' (WSL 2)')${PKG_MANAGER:+ · pacotes: $PKG_MANAGER}"
@@ -253,6 +423,15 @@ Detecta sozinho: distribuição e gerenciador de pacotes, JDK 21 (JAVA_HOME, mis
 /usr/lib/jvm ou PATH) e Android SDK (ANDROID_HOME, ANDROID_SDK_ROOT, local.properties ou
 ~/Android/Sdk).
 
+Instalação
+  setup [--yes] [--no-emulator]
+                        Instala o que faltar: JDK 21 (mise, SDKMAN ou pacote da distro),
+                        Android SDK (cmdline-tools, platform-tools, platform 36, build-tools),
+                        emulador + imagem + AVD "$AVD", bibliotecas do sistema (pede
+                        confirmação antes do sudo), local.properties. Aceita as licenças
+                        do Android SDK. Não instala o que já existe.
+                        --yes: não pergunta antes do sudo · --no-emulator: só para celular.
+
 Aparelho
   check                 Confere o ambiente e diz como instalar o que faltar, no comando
                         da sua distribuição (pacman, apt, dnf ou zypper).
@@ -283,6 +462,7 @@ Build e testes (argumentos extras vão para o Gradle, ex.: --tests "*Partidos*")
   help                  Mostra esta ajuda (também sem comando, -h ou --help).
 
 Exemplos
+  scripts/rodar-app.sh setup
   scripts/rodar-app.sh check
   scripts/rodar-app.sh install
   scripts/rodar-app.sh test-shared --tests "*PartidosTest*"
@@ -295,7 +475,7 @@ AJUDA
 
 cmd="${1:-help}"; shift || true
 case "$cmd" in
-  check | emulator | stop | phone | rotate | logs | install | shot | build | ci | clean | reports | help) "$cmd" "$@" ;;
+  setup | check | emulator | stop | phone | rotate | logs | install | shot | build | ci | clean | reports | help) "$cmd" "$@" ;;
   test) test_all "$@" ;;
   open) open_app "$@" ;;
   test-shared) test_shared "$@" ;;
