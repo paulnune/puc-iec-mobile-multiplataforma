@@ -168,8 +168,6 @@ private fun HallCard(position: Int, candidate: Candidate) {
                         candidate.subtitle(),
                         style = MaterialTheme.typography.bodySmall,
                         color = onContainer,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
