@@ -28,7 +28,7 @@ class DetalheTest {
     }
 
     @Test
-    fun `aniversario no dia da eleicao conta, depois dela nao`() {
+    fun `aniversario no dia da eleicao conta e depois dela nao`() {
         assertEquals(40, candidateAge("1986-10-04"))
         assertEquals(39, candidateAge("1986-10-05"))
         assertEquals(39, candidateAge("1986-12-31"))
@@ -76,7 +76,7 @@ class DetalheTest {
     }
 
     @Test
-    fun `so cidade, UF ZZ ignorada e sem dados`() {
+    fun `so cidade e UF ZZ ignorada e sem dados`() {
         assertEquals("Belo Horizonte", candidate(birthCity = "BELO HORIZONTE", birthState = null).birthplaceLabel())
         assertEquals("Lisboa", candidate(birthCity = "LISBOA", birthState = "ZZ").birthplaceLabel())
         assertEquals("SP", candidate(birthCity = " ", birthState = "SP").birthplaceLabel())
@@ -102,7 +102,7 @@ class DetalheTest {
     }
 
     @Test
-    fun `soma, agrupa pelo tipo curto e ordena`() {
+    fun `soma e agrupa pelo tipo curto e ordena`() {
         val summary = listOf(
             asset(order = 3, type = "Terreno", value = 2_500.0),
             asset(order = 1, type = "Veículo automotor terrestre: caminhão, automóvel, moto, etc.", value = 14_695.2),
@@ -143,7 +143,7 @@ class DetalheTest {
     }
 
     @Test
-    fun `sem bens, total zero e sem grupos`() {
+    fun `sem bens total zero e sem grupos`() {
         val summary = emptyList<Asset>().summarize()
         assertEquals(0.0, summary.total)
         assertTrue(summary.groups.isEmpty())
