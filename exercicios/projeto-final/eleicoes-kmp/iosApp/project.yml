@@ -32,6 +32,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.puciec.eleicoes.ios
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Automatic
+        # Só iPhone: a folha de compartilhar da Colinha não tem âncora de popover e derrubaria o app no iPad.
+        TARGETED_DEVICE_FAMILY: "1"
         FRAMEWORK_SEARCH_PATHS:
           - "$(inherited)"
           - "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
