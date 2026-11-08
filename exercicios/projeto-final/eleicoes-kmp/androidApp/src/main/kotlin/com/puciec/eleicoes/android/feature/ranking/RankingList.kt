@@ -1,15 +1,12 @@
 package com.puciec.eleicoes.android.feature.ranking
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,43 +29,28 @@ import com.puciec.eleicoes.domain.model.Candidate
 private const val PREFETCH_DISTANCE = 5
 
 /**
- * Lista do ranking (F1, #2): posição, foto, nome, cargo, partido, UF, patrimônio e resultado,
- * com paginação infinita. [autoLoadMore] fica desligado durante a busca, para a lista curta
- * não disparar página atrás de página (seriam até 700 chamadas à API).
+ * Lista do ranking (F1, #2): posição, foto, nome, cargo, partido, UF, patrimônio e resultado.
+ * Entra como itens na lista da tela, depois do cabeçalho, para tudo rolar junto: com o cabeçalho
+ * fixo em cima, em paisagem ou com fonte grande ele ocupava a tela inteira e a lista sumia (#11).
  */
-@Composable
-fun RankingList(
+fun LazyListScope.rankingItems(
     candidates: List<Candidate>,
     onCandidateClick: (Candidate) -> Unit,
-    modifier: Modifier = Modifier,
-    isLoadingMore: Boolean = false,
-    endReached: Boolean = true,
-    loadMoreError: AppError? = null,
-    autoLoadMore: Boolean = true,
-    onLoadMore: () -> Unit = {},
+    isLoadingMore: Boolean,
+    endReached: Boolean,
+    loadMoreError: AppError?,
+    onLoadMore: () -> Unit,
 ) {
-    val listState = rememberLazyListState()
-    val nearEnd by remember(candidates.size) {
-        derivedStateOf {
-            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisible >= candidates.size - PREFETCH_DISTANCE
-        }
+    itemsIndexed(candidates, key = { _, candidate -> candidate.id }) { index, candidate ->
+        CandidateCard(
+            candidate,
+            onClick = { onCandidateClick(candidate) },
+            position = index + 1,
+            modifier = Modifier.padding(horizontal = Spacing.l),
+        )
     }
-    // candidates.size na chave: se a página nova trouxe poucos itens e o fim continua à vista, pede a seguinte.
-    LaunchedEffect(nearEnd, candidates.size, autoLoadMore, endReached, loadMoreError, isLoadingMore) {
-        if (nearEnd && autoLoadMore && !endReached && loadMoreError == null && !isLoadingMore) onLoadMore()
-    }
-
-    LazyColumn(
-        state = listState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = Spacing.l, vertical = Spacing.s),
-        verticalArrangement = Arrangement.spacedBy(Spacing.s),
-    ) {
-        itemsIndexed(candidates, key = { _, candidate -> candidate.id }) { index, candidate ->
-            CandidateCard(candidate, onClick = { onCandidateClick(candidate) }, position = index + 1)
-        }
-        item(key = "rodape") {
+    item(key = "rodape") {
+        Box(Modifier.padding(horizontal = Spacing.l)) {
             RankingFooter(
                 count = candidates.size,
                 isLoadingMore = isLoadingMore,
@@ -77,6 +59,34 @@ fun RankingList(
                 onLoadMore = onLoadMore,
             )
         }
+    }
+}
+
+/**
+ * Paginação infinita com prefetch: pede a próxima página quando faltam [PREFETCH_DISTANCE] cards.
+ * [itemsBefore] são os itens antes do primeiro card (o cabeçalho). [autoLoadMore] fica desligado
+ * durante a busca, para a lista curta não disparar página atrás de página (seriam até 700 chamadas à API).
+ */
+@Composable
+fun RankingAutoLoad(
+    listState: LazyListState,
+    itemsBefore: Int,
+    candidateCount: Int,
+    autoLoadMore: Boolean,
+    endReached: Boolean,
+    loadMoreError: AppError?,
+    isLoadingMore: Boolean,
+    onLoadMore: () -> Unit,
+) {
+    val nearEnd by remember(candidateCount, itemsBefore) {
+        derivedStateOf {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisible >= itemsBefore + candidateCount - PREFETCH_DISTANCE
+        }
+    }
+    // candidateCount na chave: se a página nova trouxe poucos itens e o fim continua à vista, pede a seguinte.
+    LaunchedEffect(nearEnd, candidateCount, autoLoadMore, endReached, loadMoreError, isLoadingMore) {
+        if (nearEnd && candidateCount > 0 && autoLoadMore && !endReached && loadMoreError == null && !isLoadingMore) onLoadMore()
     }
 }
 
