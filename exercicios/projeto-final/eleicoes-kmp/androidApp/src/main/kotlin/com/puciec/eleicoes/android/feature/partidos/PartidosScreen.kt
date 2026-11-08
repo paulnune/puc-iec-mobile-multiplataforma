@@ -1,6 +1,7 @@
 package com.puciec.eleicoes.android.feature.partidos
 
-import androidx.activity.compose.BackHandler
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +31,7 @@ fun NavGraphBuilder.partidosGraph(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PartidosScreen(viewModel: PartidosViewModel, onCandidateClick: (Candidate) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()

@@ -34,7 +34,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -149,7 +150,7 @@ private fun MapaContent(overview: MapaOverview, onPlaceClick: (String) -> Unit) 
 
     Text("Estados", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
     Spacer(Modifier.height(Spacing.s))
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val screenHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() }
     val listHeight = minOf(STATES_LIST_HEIGHT, screenHeight * STATES_LIST_MAX_SCREEN_FRACTION)
     Column(Modifier.heightIn(max = listHeight).verticalScroll(rememberScrollState())) {
         overview.states.forEach { place ->

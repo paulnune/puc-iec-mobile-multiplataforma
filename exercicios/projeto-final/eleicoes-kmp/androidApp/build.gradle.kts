@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)
     implementation(libs.compose.ui)
+    implementation(libs.compose.uiBackhandler)
     implementation(libs.compose.material3)
     implementation(libs.compose.materialIcons)
     implementation(libs.compose.uiToolingPreview)
@@ -55,7 +56,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.network.ktor3)
 
     // Já declaradas para as issues não disputarem este arquivo.
     implementation(libs.androidx.datastore.preferences) // #5 colinha, #12 cache, #13 tema

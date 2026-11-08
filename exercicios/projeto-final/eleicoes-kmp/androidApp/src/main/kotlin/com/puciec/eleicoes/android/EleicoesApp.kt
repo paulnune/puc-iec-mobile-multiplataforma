@@ -21,7 +21,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,8 +66,8 @@ private fun EleicoesScaffold(container: AppContainer) {
     val onTopLevel = destination == null ||
         TopLevelDestination.entries.any { tab -> destination.hasRoute(tab.route::class) }
     // Paisagem: abas numa barra lateral, para sobrar altura para o conteúdo (#11).
-    val configuration = LocalConfiguration.current
-    val useRail = configuration.screenWidthDp > configuration.screenHeightDp
+    val windowSize = LocalWindowInfo.current.containerSize
+    val useRail = windowSize.width > windowSize.height
     val labels = tabLabelStyle()
     val isSelected = { tab: TopLevelDestination -> destination?.hierarchy?.any { it.hasRoute(tab.route::class) } == true }
 

@@ -1,5 +1,6 @@
 package com.puciec.eleicoes.android.feature.partidos
 
+import com.puciec.eleicoes.android.ui.state.nowMillis
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -100,7 +101,7 @@ fun PartidosList(
 internal fun FreshnessLine(state: PartidosUiState) {
     val updated = state.lastUpdated ?: return
     Text(
-        updatedAgo(updated, System.currentTimeMillis()),
+        updatedAgo(updated, nowMillis()),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
