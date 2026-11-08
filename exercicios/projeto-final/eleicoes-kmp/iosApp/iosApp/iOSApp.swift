@@ -5,7 +5,8 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .ignoresSafeArea(.keyboard)
+                // O Compose aplica as próprias insets (entalhe, barra inferior): sem isto elas contam em dobro.
+                .ignoresSafeArea()
         }
     }
 }
