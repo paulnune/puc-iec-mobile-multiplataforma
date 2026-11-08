@@ -26,7 +26,7 @@ class ContrastTest {
     }
 
     @Test
-    fun `texto escuro em fundo medio, onde o branco falharia`() {
+    fun `texto escuro em fundo medio onde o branco falharia`() {
         // Cinza médio: luminância abaixo de 0,5, mas o branco fica abaixo de 3:1.
         val medio = 0x9E9E9E
         assertEquals(0x191C1A, Contrast.readableOn(medio))
@@ -34,7 +34,7 @@ class ContrastTest {
     }
 
     @Test
-    fun `todas as UFs do mapa ficam legiveis, do empate a margem cheia`() {
+    fun `todas as UFs do mapa ficam legiveis do empate a margem cheia`() {
         val partidos = listOf("PT", "PL", "PSD", "MDB", "PP", "UNIÃO", "REPUBLICANOS", "PSB", "PDT", "PODE", "PSDB",
             "NOVO", "PSOL", "PCDOB", "PV", "REDE", "AVANTE", "SOLIDARIEDADE", "PRD", "CIDADANIA", "MISSÃO", "XYZ")
         val bases = listOf(MapaColors.SITE_BASE, 0x111412) // tema claro (site) e escuro

@@ -15,21 +15,21 @@ class EvolucaoRankingTest {
     private val semHistorico = change("D", delta = null)
 
     @Test
-    fun `maior variacao ordena pelo modulo do delta, do maior ao menor`() {
+    fun `maior variacao ordena pelo modulo do delta do maior ao menor`() {
         val ranking = rankWealthVariations(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.BIGGEST_CHANGE)
 
         assertEquals(listOf("B", "A", "C"), ranking.map { it.candidateId })
     }
 
     @Test
-    fun `mais ganhou mostra so deltas positivos, do maior ao menor`() {
+    fun `mais ganhou mostra so deltas positivos do maior ao menor`() {
         val ranking = rankWealthVariations(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.MOST_GAINED)
 
         assertEquals(listOf("A", "C"), ranking.map { it.candidateId })
     }
 
     @Test
-    fun `mais perdeu mostra so deltas negativos, do mais negativo ao menos`() {
+    fun `mais perdeu mostra so deltas negativos do mais negativo ao menos`() {
         val ranking = rankWealthVariations(listOf(pouco, ganhou, perdeu, semHistorico), RankingSort.MOST_LOST)
 
         assertEquals(listOf("B"), ranking.map { it.candidateId })

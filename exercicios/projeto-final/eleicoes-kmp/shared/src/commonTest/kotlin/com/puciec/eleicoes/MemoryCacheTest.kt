@@ -33,7 +33,7 @@ class MemoryCacheTest {
     }
 
     @Test
-    fun `se quem carregava for cancelado, a outra chamada carrega de novo`() = runTest {
+    fun `se quem carregava for cancelado a outra chamada carrega de novo`() = runTest {
         val cache = MemoryCache(ttl = 5.minutes)
         val owner = launch { cache.getOrLoad("k") { awaitCancellation() } }
         runCurrent()

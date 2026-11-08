@@ -59,6 +59,16 @@ kotlin {
         withHostTest { }
     }
 
+    // iOS: só a lógica (dados, regras e testes do commonMain), como framework estático "Shared",
+    // igual ao da A5. A UI continua no androidApp. Compilar e testar estes alvos exige macOS
+    // (workflow pf-eleicoes-kmp-ios); no Linux o build do APK não depende deles.
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
@@ -67,6 +77,9 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.android)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
