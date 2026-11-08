@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -269,7 +270,11 @@ private fun UrnaKeys(digits: String, modifier: Modifier = Modifier) {
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 shadowElevation = 1.dp,
             ) {
-                Box(Modifier.size(width = 26.dp, height = 34.dp), contentAlignment = Alignment.Center) {
+                // Tamanho mínimo, não fixo: com fonte grande a tecla cresce em vez de cortar o dígito (#11).
+                Box(
+                    Modifier.defaultMinSize(minWidth = 26.dp, minHeight = 34.dp).padding(horizontal = 2.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Text(
                         digit.toString(),
                         style = MaterialTheme.typography.titleLarge,
