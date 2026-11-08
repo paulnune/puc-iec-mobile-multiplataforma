@@ -225,7 +225,7 @@ private fun ColinhaRow(entry: ColinhaEntry, onClick: () -> Unit, onRemove: () ->
             }
             Spacer(Modifier.height(Spacing.m))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CandidatePhoto(favorite.photoUrl, favorite.ballotName, size = 48.dp)
+                CandidatePhoto(favorite.photoUrl, favorite.ballotName, size = 48.dp, decorative = true)
                 Spacer(Modifier.width(Spacing.m))
                 Column(Modifier.weight(1f)) {
                     Text(

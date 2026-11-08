@@ -103,7 +103,7 @@ private fun DetalheContent(
             .padding(Spacing.l),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CandidatePhoto(candidate.photoUrl, candidate.ballotName, size = 88.dp)
+            CandidatePhoto(candidate.photoUrl, candidate.ballotName, size = 88.dp, decorative = true)
             Spacer(Modifier.width(Spacing.l))
             Column(Modifier.weight(1f)) {
                 Text(candidate.ballotName.toTitleCase(), style = MaterialTheme.typography.headlineSmall)
