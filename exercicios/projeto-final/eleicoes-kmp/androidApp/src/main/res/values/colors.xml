@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ícone e splash seguem a paleta de ui/theme/Color.kt. -->
+    <color name="ic_launcher_background">#FF0B6E4F</color>
+    <color name="splash_background">#FFF8FAF6</color>
+    <color name="splash_icon">#FF0B6E4F</color>
+</resources>

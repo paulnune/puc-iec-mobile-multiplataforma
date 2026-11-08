@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -43,18 +44,29 @@ fun Candidate.subtitle(): String =
 /** Patrimônio curto ("R$ 8,2 mi") ou "Não declarado". */
 fun Candidate.assetsLabel(): String = if (assetsDisclosed) Money.compact(totalAssets) else "Não declarado"
 
-/** Foto do candidato; sem foto, ou se a imagem falhar, mostra as iniciais. */
+/**
+ * Foto do candidato; sem foto, ou se a imagem falhar, mostra as iniciais.
+ * [decorative]: quando o nome já aparece ao lado (cards, listas), o TalkBack pula a foto em vez de
+ * ler "Foto de Fulano, FU, Fulano" (#11).
+ */
 @Composable
-fun CandidatePhoto(url: String?, name: String, modifier: Modifier = Modifier, size: Dp = 56.dp) {
+fun CandidatePhoto(
+    url: String?,
+    name: String,
+    modifier: Modifier = Modifier,
+    size: Dp = 56.dp,
+    decorative: Boolean = false,
+) {
     val initials = remember(name) { name.initials() }
-    val shaped = modifier.size(size).clip(CircleShape)
+    val semantics = if (decorative) Modifier.clearAndSetSemantics { } else Modifier
+    val shaped = modifier.size(size).clip(CircleShape).then(semantics)
     if (url.isNullOrBlank()) {
         InitialsAvatar(initials, shaped)
         return
     }
     SubcomposeAsyncImage(
         model = url,
-        contentDescription = "Foto de ${name.toTitleCase()}",
+        contentDescription = if (decorative) null else "Foto de ${name.toTitleCase()}",
         modifier = shaped,
         contentScale = ContentScale.Crop,
         loading = { InitialsAvatar(initials, Modifier.fillMaxSize()) },
@@ -119,21 +131,20 @@ fun CandidateCard(
                     modifier = Modifier.widthIn(min = 28.dp),
                 )
             }
-            CandidatePhoto(candidate.photoUrl, candidate.ballotName)
+            CandidatePhoto(candidate.photoUrl, candidate.ballotName, decorative = true)
             Spacer(Modifier.width(Spacing.m))
             Column(Modifier.weight(1f)) {
                 Text(
                     candidate.ballotName.toTitleCase(),
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // Sem maxLines: com fonte grande o cargo, o partido e a UF quebram linha em vez de virar "…" (#11).
                 Text(
                     candidate.subtitle(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                 )
                 if (candidate.outcome != Outcome.UNKNOWN) {
                     Spacer(Modifier.height(Spacing.xs))
