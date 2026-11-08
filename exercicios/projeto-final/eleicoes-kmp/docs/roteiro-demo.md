@@ -140,13 +140,13 @@ Explicar:
 - O ADR: por que KMP, ViewModel + StateFlow e o MCP no lugar da REST, e as alternativas descartadas. No fim do trabalho, o grupo viabilizou o iOS para a lógica (#26); a interface no iPhone é o próximo passo.
 - Os testes: 231 casos, 169 deles no `commonTest` do `shared`, que rodam sem rede, no Android e num simulador de iPhone. O CI builda e testa cada PR, e o merge exige a aprovação de outro integrante.
 
-Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de 08/11, antes dos PRs de documentação. Refaça na segunda com `git shortlog -sn --no-merges origin/projeto-final -- exercicios/projeto-final/eleicoes-kmp .github/workflows/pf-eleicoes-kmp.yml`.
+Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de 08/11 e já inclui o README (#28) e este PR (#16). Para refazer: `git shortlog -sn --no-merges origin/projeto-final -- exercicios/projeto-final/eleicoes-kmp .github/workflows/pf-eleicoes-kmp.yml .github/workflows/pf-eleicoes-kmp-ios.yml`.
 
 | Integrante | Issues | PRs integrados | Commits |
 |---|---|---|---|
-| Paulo | #1, #2, #9, #26 | #14, #15, #27 | 10 |
+| Paulo | #1, #2, #9, #26 | #14, #15, #16, #27 | 14 |
 | José Ricardo | #3, #8 | #24, #25 | 14 |
-| Diego | #4, #10 | #23 | 2 |
+| Diego | #4, #10 | #23, #28 | 3 |
 | Natan | #5, #11 | #21, #22 | 17 |
 | Rodrigo | #6, #12 | #17, #18 | 18 |
 | Gabriel | #7, #13 | #19, #20 | 8 |
@@ -182,7 +182,7 @@ Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de
 
 Domingo, na reunião da #9:
 - [x] Features na `projeto-final`: as 8, mais UX e cache offline, com o CI verde num checkout limpo.
-- [ ] Build seguindo o README do zero, num clone novo (#10).
+- [x] Build seguindo o README do zero, num clone novo (#10): feito pelo Diego no #28.
 - [ ] Ensaio cronometrado com todos, seguindo este roteiro. Quem passar do tempo corta.
 - [ ] Combinar:
   - quem opera o aparelho;
