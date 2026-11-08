@@ -1,11 +1,9 @@
 package com.puciec.eleicoes.android.feature.colinha
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.puciec.eleicoes.domain.favorites.FavoriteCandidate
 import com.puciec.eleicoes.domain.favorites.FavoritesRepository
 import kotlinx.coroutines.flow.Flow
@@ -15,15 +13,11 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
-private val Context.colinhaDataStore: DataStore<Preferences> by preferencesDataStore(name = "colinha")
-
 /**
  * Favoritos gravados no aparelho (#5): fechar e reabrir o app mantém a colinha.
  * A lista vai como JSON numa chave só do DataStore, na ordem em que foi favoritada.
  */
 class DataStoreFavoritesRepository(private val dataStore: DataStore<Preferences>) : FavoritesRepository {
-
-    constructor(context: Context) : this(context.applicationContext.colinhaDataStore)
 
     override val favorites: Flow<List<FavoriteCandidate>> =
         dataStore.data

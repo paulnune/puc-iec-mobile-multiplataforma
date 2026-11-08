@@ -1,12 +1,14 @@
 package com.puciec.eleicoes.android
 
-import android.content.Context
 import com.puciec.eleicoes.ApiConfig
 import com.puciec.eleicoes.android.feature.colinha.DataStoreFavoritesRepository
 import com.puciec.eleicoes.android.ui.theme.ThemePreference
 import com.puciec.eleicoes.android.ui.theme.ThemeStore
+import com.puciec.eleicoes.android.ui.state.nowMillis
 import com.puciec.eleicoes.data.cache.CachingEleicoesDataSource
 import com.puciec.eleicoes.data.cache.FileCacheStore
+import com.puciec.eleicoes.data.store.createPrefsDataStore
+import com.puciec.eleicoes.platform.appFilesDirPath
 import com.puciec.eleicoes.data.repository.CandidatesRepository
 import com.puciec.eleicoes.data.repository.EvolucaoRepository
 import com.puciec.eleicoes.data.repository.PartiesRepository
@@ -15,7 +17,6 @@ import com.puciec.eleicoes.data.source.EleicoesDataSource
 import com.puciec.eleicoes.data.source.createEleicoesDataSource
 import com.puciec.eleicoes.domain.favorites.FavoritesRepository
 import com.puciec.eleicoes.domain.model.DataStatus
-import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,9 +29,9 @@ import kotlinx.coroutines.launch
  * Injeção de dependência manual: um lugar só cria as peças e as entrega às telas.
  * Cada issue troca a sua peça aqui, sem mexer nas telas dos outros.
  */
-class AppContainer(context: Context) {
-    /** Para DataStore e arquivos (#5, #12, #13). */
-    val appContext: Context = context.applicationContext
+class AppContainer {
+    /** Pasta do cache offline do app inteiro (#12); o catálogo de partidos tem a sua, separada. */
+    val cacheDirPath: String = appFilesDirPath() + "/eleicoes-cache"
 
     val hasApiKey: Boolean = ApiConfig.hasApiKey
 
@@ -40,8 +41,8 @@ class AppContainer(context: Context) {
      */
     private val cachingSource = CachingEleicoesDataSource(
         delegate = createEleicoesDataSource(),
-        store = FileCacheStore(File(appContext.filesDir, "eleicoes-cache")),
-        now = System::currentTimeMillis,
+        store = FileCacheStore(cacheDirPath),
+        now = ::nowMillis,
     )
 
     /** Porta de dados, via MCP, embrulhada pelo cache em disco. */
@@ -53,13 +54,13 @@ class AppContainer(context: Context) {
     val evolucaoRepository = EvolucaoRepository(candidatesRepository)
 
     /** Colinha gravada no aparelho com DataStore (#5): sobrevive a fechar o app. */
-    val favoritesRepository: FavoritesRepository = DataStoreFavoritesRepository(appContext)
+    val favoritesRepository: FavoritesRepository = DataStoreFavoritesRepository(createPrefsDataStore("colinha.preferences_pb"))
 
     /** Escopo dos processos de fundo do container (gravar a escolha de tema). Vive com o processo. */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /** Tema escolhido, lido do aparelho. Começa em [ThemePreference.SYSTEM] até o DataStore responder. */
-    private val themeStore = ThemeStore(appContext)
+    private val themeStore = ThemeStore(createPrefsDataStore("tema.preferences_pb"))
     val themePreference: StateFlow<ThemePreference> = themeStore.preference
         .stateIn(appScope, SharingStarted.Eagerly, ThemePreference.SYSTEM)
 

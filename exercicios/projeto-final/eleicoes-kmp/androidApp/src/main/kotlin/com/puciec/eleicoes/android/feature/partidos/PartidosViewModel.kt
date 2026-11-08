@@ -8,6 +8,8 @@ import com.puciec.eleicoes.android.AppContainer
 import com.puciec.eleicoes.android.ui.state.UiState
 import com.puciec.eleicoes.android.ui.state.toAppError
 import com.puciec.eleicoes.data.cache.FileCacheStore
+import com.puciec.eleicoes.platform.appFilesDirPath
+import com.puciec.eleicoes.android.ui.state.nowMillis
 import com.puciec.eleicoes.data.partidos.PartidosCatalog
 import com.puciec.eleicoes.data.repository.CandidatesRepository
 import com.puciec.eleicoes.data.source.createEleicoesDataSource
@@ -21,7 +23,6 @@ import com.puciec.eleicoes.domain.paging.PagedList
 import com.puciec.eleicoes.domain.partidos.PartySort
 import com.puciec.eleicoes.domain.partidos.filterAndSort
 import com.puciec.eleicoes.domain.partidos.officialParties
-import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -304,13 +305,13 @@ class PartidosViewModel(
          * O catálogo lê a API sem o cache de 5 min do resto do app (o ↻ precisa buscar de verdade) e grava numa
          * pasta própria, separada da do cache offline (#12). O AppContainer não muda.
          */
-        fun factory(container: AppContainer, filesDir: File) = viewModelFactory {
+        fun factory(container: AppContainer) = viewModelFactory {
             initializer {
                 PartidosViewModel(
                     catalog = PartidosCatalog(
                         source = createEleicoesDataSource(),
-                        store = FileCacheStore(File(filesDir, "partidos-cache")),
-                        now = System::currentTimeMillis,
+                        store = FileCacheStore(appFilesDirPath() + "/partidos-cache"),
+                        now = ::nowMillis,
                     ),
                     candidatesRepository = container.candidatesRepository,
                 )

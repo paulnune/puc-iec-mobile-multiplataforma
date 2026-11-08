@@ -1,7 +1,6 @@
 package com.puciec.eleicoes.android.feature.colinha
 
-import android.content.Context
-import android.content.Intent
+import com.puciec.eleicoes.platform.rememberShareText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontFamily
@@ -138,7 +136,7 @@ class ColinhaViewModel(private val favorites: FavoritesRepository) : ViewModel()
 @Composable
 fun ColinhaScreen(viewModel: ColinhaViewModel, onCandidateClick: (FavoriteCandidate) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val share = rememberShareText()
 
     when (val current = state) {
         UiState.Loading -> LoadingShimmer(rows = 4)
@@ -152,7 +150,7 @@ fun ColinhaScreen(viewModel: ColinhaViewModel, onCandidateClick: (FavoriteCandid
             ui = current.data,
             onCandidateClick = onCandidateClick,
             onRemove = { viewModel.remove(it.id) },
-            onShare = { context.shareText(current.data.shareText) },
+            onShare = { share(current.data.shareText) },
         )
     }
 }
@@ -284,12 +282,4 @@ private fun UrnaKeys(digits: String, modifier: Modifier = Modifier) {
             }
         }
     }
-}
-
-private fun Context.shareText(text: String) {
-    val send = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, text)
-    }
-    startActivity(Intent.createChooser(send, "Compartilhar colinha"))
 }

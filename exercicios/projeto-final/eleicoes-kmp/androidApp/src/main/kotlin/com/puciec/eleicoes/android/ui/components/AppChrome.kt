@@ -1,5 +1,6 @@
 package com.puciec.eleicoes.android.ui.components
 
+import com.puciec.eleicoes.platform.formatDayMonthTime
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,9 +27,6 @@ import androidx.compose.ui.Modifier
 import com.puciec.eleicoes.android.ui.theme.Spacing
 import com.puciec.eleicoes.android.ui.theme.ThemePreference
 import com.puciec.eleicoes.domain.model.DataStatus
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * Faixa global abaixo da barra superior. Hoje some sempre (dados ao vivo);
@@ -43,15 +41,12 @@ fun StatusBanner(status: DataStatus, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth(),
     ) {
         Text(
-            "Sem conexão: dados de ${formatDateTime(status.savedAtEpochMillis)}",
+            "Sem conexão: dados de ${formatDayMonthTime(status.savedAtEpochMillis)}",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.padding(horizontal = Spacing.l, vertical = Spacing.s),
         )
     }
 }
-
-private fun formatDateTime(epochMillis: Long): String =
-    SimpleDateFormat("dd/MM 'às' HH:mm", Locale.forLanguageTag("pt-BR")).format(Date(epochMillis))
 
 /** Menu "⋮" da barra superior. */
 @Composable

@@ -1,11 +1,6 @@
 package com.puciec.eleicoes.android.ui.theme
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
+import com.puciec.eleicoes.platform.SystemBarsEffect
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -58,25 +53,10 @@ fun EleicoesTheme(
         ThemePreference.DARK -> true
     }
     // Ícones da barra de status e de navegação acompanham o tema do app (e não só o do sistema).
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = view.context.findActivity()?.window ?: return@SideEffect
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !dark
-                isAppearanceLightNavigationBars = !dark
-            }
-        }
-    }
+    SystemBarsEffect(dark)
     MaterialTheme(
         colorScheme = if (dark) DarkColors else LightColors,
         typography = EleicoesTypography,
         content = content,
     )
-}
-
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
 }

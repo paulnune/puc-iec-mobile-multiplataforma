@@ -4,7 +4,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -25,8 +24,7 @@ fun NavGraphBuilder.partidosGraph(
     container: AppContainer,
 ) {
     composable<PartidosRoute> {
-        val filesDir = LocalContext.current.filesDir
-        val viewModel: PartidosViewModel = viewModel(factory = PartidosViewModel.factory(container, filesDir))
+        val viewModel: PartidosViewModel = viewModel(factory = PartidosViewModel.factory(container))
         PartidosScreen(viewModel, onCandidateClick = { navController.navigate(DetalheRoute(it.id)) })
     }
 }
