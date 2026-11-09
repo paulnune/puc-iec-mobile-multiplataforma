@@ -16,7 +16,7 @@
 
 ## Decisão
 
-1. **Kotlin Multiplatform.** Dados e regras ficam no módulo `shared` (`commonMain`), sem nenhuma API de Android ou da JVM. O código de plataforma do `shared` se resume ao motor HTTP (`expect fun createHttpClient()`) e ao cache em arquivo. O `shared` compila para Android e iOS (#26). A UI Compose e os ViewModels também ficam no `shared` (Compose Multiplatform), e `androidApp` e `iosApp` são só cascas que hospedam a tela.
+1. **Kotlin Multiplatform.** Dados e regras ficam no módulo `shared` (`commonMain`), sem nenhuma API de Android ou da JVM. O código de plataforma do `shared` se resume ao motor HTTP (`expect fun createHttpClient()`) e às funções de `platform/`: pasta de arquivos, SHA-256, data pt-BR, compartilhar e barras do sistema. O `shared` compila para Android e iOS (#26). A UI Compose e os ViewModels também ficam no `shared` (Compose Multiplatform), e `androidApp` e `iosApp` são só cascas que hospedam a tela.
 2. **Estado em ViewModel + StateFlow**, com fluxo unidirecional: a tela observa um `UiState` (carregando, sucesso, vazio, erro) e só chama funções do ViewModel. Nenhum fetch dentro de composable.
 3. **Fonte de dados atrás de uma porta** (`EleicoesDataSource`), com dois adapters: MCP (o padrão) e REST. O que a API não entrega pronto vira regra do domínio: a variação do patrimônio (#7) é calculada no app a partir de `get_candidate_filings`.
 4. **Cache offline como decorator da porta** (`CachingEleicoesDataSource`, #12). Ele guarda em disco a última resposta boa de cada consulta e a devolve quando a rede ou a API falham. Uma resposta de menos de 5 minutos volta sem chamar a API, por causa do limite de requisições.
@@ -27,7 +27,7 @@
 
 | Alternativa | Por que ficou de fora |
 |---|---|
-| Flutter (A3) | Uma base de código com renderer próprio, mas a regra de negócio ficaria em Dart, sem reaproveitar em apps nativos. KMP compartilha a lógica e deixa a UI nativa. |
+| Flutter (A3) | Uma base de código com renderer próprio, mas a regra de negócio ficaria em Dart, sem reaproveitar em apps nativos. Com KMP a lógica fica em Kotlin no `shared`, e a UI compartilhada é Compose: no Android, o toolkit nativo; no iOS, desenhada pelo próprio Compose, como faz o Flutter. |
 | React Native (A2) | Ecossistema grande, mas os tipos do TypeScript somem em tempo de execução: um JSON fora do formato passa calado até quebrar na tela. Com kotlinx.serialization o DTO é validado ao decodificar, e o erro vira `AppError.Unexpected`. |
 | UI nativa em SwiftUI no iOS | Reescreveria as 8 telas e os ViewModels em Swift. Compose Multiplatform reaproveita a UI do Android, e os pontos presos ao Android eram poucos. |
 | Estado com bibliotecas MVI/Redux ou `mutableStateOf` na tela | ViewModel + StateFlow é o padrão da plataforma, sobrevive à rotação e é testável sem UI. |
@@ -38,12 +38,12 @@
 
 **Positivas:**
 - cada feature tem a sua pasta e não depende das outras;
-- a lógica (protocolo MCP, filtros, formatação, regras da colinha, cache e variação do patrimônio) é testada no `commonTest`, sem rede: são 169 dos 231 casos de teste, e os mesmos 169 passam num simulador de iPhone (workflow `pf-eleicoes-kmp-ios`). Para o iOS, o único ajuste foi tirar a vírgula de 10 nomes de teste, que o Kotlin/Native não aceita;
+- a lógica (protocolo MCP, filtros, formatação, regras da colinha, cache e variação do patrimônio) é testada no `commonTest`, sem rede: são 234 dos 238 casos de teste, e os mesmos 234 passam num simulador de iPhone (workflow `pf-eleicoes-kmp-ios`). Para a lógica rodar no iOS (#26), o único ajuste foi tirar a vírgula de 10 nomes de teste, que o Kotlin/Native não aceita;
 - o CI builda e testa cada PR, e o merge na `projeto-final` exige a aprovação de outro integrante.
 
 **Negativas:**
 - a UI iOS é a mesma do Android (Material 3 em Compose), não a nativa da Apple; o simulador é só arm64; o iOS foi conferido no simulador, não em aparelho;
-- as fotos dos candidatos vêm do TSE e, no Android, a requisição foi recusada (erro HTTP) na verificação de 2026-11-08; o app cai nas iniciais. O motivo não está confirmado (ver README, "Limitações conhecidas");
+- o app não mostra as fotos dos candidatos: as do TSE respondem 403 no Android, e o motivo não está confirmado. Desde o #31, Android e iOS mostram só as iniciais, e o Coil saiu do projeto (ver README, "Limitações conhecidas");
 - a barra de status do iOS segue o tema do sistema, não o do app;
 - o que prende ao sistema fica em `expect/actual` pequenos (`platform/`): pasta de arquivos, SHA-256, data pt-BR, compartilhar e barras do sistema;
 - o MCP foi pensado para agentes de IA: se o provedor mudar o formato, o adapter muda (a porta limita o estrago a uma classe);

@@ -5,9 +5,10 @@ App Android em Kotlin Multiplatform que mostra os dados públicos do TSE das ele
 Multiplataforma (PUC Minas).
 
 O app responde a perguntas como “quem declarou mais patrimônio?”, “quanto esse candidato ficou mais rico desde
-2006?” e “quem liderou o 1º turno em cada estado?”. As regras e a camada de dados ficam no módulo `shared`
-(Kotlin), e a interface é Compose com Material 3 no `androidApp`. As decisões de arquitetura e as alternativas
-descartadas estão no [ADR](ADR.md).
+2006?” e “quem liderou o 1º turno em cada estado?”. As regras, a camada de dados e a interface (Compose
+Multiplatform com Material 3) ficam no módulo `shared`; o `androidApp` e o `iosApp` só hospedam a tela, e o app
+também roda no simulador de iPhone. As decisões de arquitetura e as alternativas descartadas estão no
+[ADR](ADR.md).
 
 ## O que o app faz
 
@@ -131,11 +132,12 @@ silicon). Para regerar o projeto depois de mexer em `iosApp/project.yml`: `brew 
 ```
 shared/                  KMP (Android e iOS): dados, regras e a UI Compose com Material 3
   data/source/           porta EleicoesDataSource e os adapters MCP (padrão) e REST
-  data/repository/       repositórios com cache em memória e em disco
+  data/cache/            cache em disco, como decorator da porta (CachingEleicoesDataSource)
+  data/repository/       repositórios com cache em memória
   domain/                modelos, formatação de dinheiro, filtros, favoritos e regras
   ui/feature/<feature>/  uma pasta por feature: tela + ViewModel
   ui/                    tema, componentes, navegação e estados de tela compartilhados
-  platform/              expect/actual: pasta de arquivos, SHA-256, data, compartilhar
+  platform/              expect/actual: pasta de arquivos, SHA-256, data, compartilhar, barras do sistema
 androidApp/              casca Android: MainActivity, splash e manifest
 iosApp/                  casca iOS: projeto Xcode (SwiftUI) que hospeda a UI Compose
 ```

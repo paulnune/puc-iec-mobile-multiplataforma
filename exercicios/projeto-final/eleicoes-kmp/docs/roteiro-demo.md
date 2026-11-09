@@ -137,26 +137,26 @@ Mostrar uma tela só, sem abrir a IDE: o diagrama de camadas do README e a tabel
 
 Explicar:
 - O caminho do dado: tela → ViewModel (StateFlow) → repositório → porta `EleicoesDataSource` → API. Nenhum composable faz fetch.
-- O ADR: por que KMP, ViewModel + StateFlow e o MCP no lugar da REST, e as alternativas descartadas. No fim do trabalho, o grupo viabilizou o iOS para a lógica (#26); a interface no iPhone é o próximo passo.
-- Os testes: 231 casos, 169 deles no `commonTest` do `shared`, que rodam sem rede, no Android e num simulador de iPhone. O CI builda e testa cada PR, e o merge exige a aprovação de outro integrante.
+- O ADR: por que KMP, ViewModel + StateFlow e o MCP no lugar da REST, e as alternativas descartadas. No fim do trabalho, o grupo levou o app ao iPhone em duas etapas: a lógica (#26) e depois a interface, com Compose Multiplatform (#29). A UI e os ViewModels ficam no `shared`, e `androidApp` e `iosApp` só hospedam a tela.
+- Os testes: 238 casos, 234 deles no `commonTest` do `shared`, que rodam sem rede, no Android e num simulador de iPhone. O CI builda o APK e o app iOS e testa cada PR, e o merge exige a aprovação de outro integrante.
 
-Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de 08/11 e já inclui o README (#28) e este PR (#16). Para refazer: `git shortlog -sn --no-merges origin/projeto-final -- exercicios/projeto-final/eleicoes-kmp .github/workflows/pf-eleicoes-kmp.yml .github/workflows/pf-eleicoes-kmp-ios.yml`.
+Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de 09/11 e já inclui o app iOS (#29), o avatar (#31) e este PR (#32). Para refazer: `git shortlog -sn --no-merges origin/projeto-final -- exercicios/projeto-final/eleicoes-kmp .github/workflows/pf-eleicoes-kmp.yml .github/workflows/pf-eleicoes-kmp-ios.yml`.
 
 | Integrante | Issues | PRs integrados | Commits |
 |---|---|---|---|
-| Paulo | #1, #2, #9, #26 | #14, #15, #16, #27 | 14 |
+| Paulo | #1, #2, #9, #26 | #14, #15, #16, #27, #32 | 17 |
 | José Ricardo | #3, #8 | #24, #25 | 14 |
 | Diego | #4, #10 | #23, #28 | 3 |
 | Natan | #5, #11 | #21, #22 | 17 |
 | Rodrigo | #6, #12 | #17, #18 | 18 |
-| Gabriel | #7, #13 | #19, #20 | 8 |
+| Gabriel | #7, #13 | #19, #20, #29, #31 | 22 |
 
 ## Perguntas prováveis
 
 | Pergunta | Quem responde | Onde está a resposta |
 |---|---|---|
 | Por que KMP e não Flutter ou React Native? | Paulo | `ADR.md` |
-| A UI é só Android. O que é multiplataforma aqui? Por que não Compose Multiplatform, como na A5? | Paulo | `ADR.md`: a lógica roda nas duas plataformas, e os 169 testes do `commonTest` passam num simulador de iPhone (abrir o PR #27 e mostrar o check verde). O grupo testou as 8 telas no Android dentro do prazo e viabilizou o iOS no fim, começando pela lógica. A UI em Compose Multiplatform é o próximo passo |
+| O que é multiplataforma aqui? A tela do iPhone é nativa? | Paulo | `ADR.md`: tudo, menos as cascas e as peças de plataforma (`expect`/`actual`: HTTP, pasta de arquivos, SHA-256, data pt-BR, compartilhar e barras do sistema). A lógica e a UI, em Compose Multiplatform como na A5, ficam no `shared`. Os 234 testes do `commonTest` passam num simulador de iPhone (check "testes no simulador iOS" do CI), e o app abre no iPhone (prints em `docs/screenshots/ios/`, #29). A tela não é nativa da Apple: no iOS, o Compose desenha com o próprio renderer, como o Flutter. O grupo testou as 8 telas no Android; no iOS, o README lista o que ainda não foi verificado |
 | A busca só acha quem já foi carregado? | Diego | Não. Ela procura primeiro na lista carregada, sem chamar a API, e só refaz a consulta com `q` no servidor quando não acha ninguém (`RankingViewModel.onSearchTextChange`). Cargo, gênero e UF vão sempre para a API |
 | Onde fica o estado? O que acontece ao girar a tela? | O dono da tela | No ViewModel da feature, que sobrevive à rotação |
 | Onde o app busca os dados? Tem fetch na tela? | Paulo | Não tem: a tela só lê o estado e chama o ViewModel. A chamada sai do repositório (`RankingScreen` é o exemplo) |
