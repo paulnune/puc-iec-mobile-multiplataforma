@@ -117,10 +117,9 @@ silicon). Para regerar o projeto depois de mexer em `iosApp/project.yml`: `brew 
 
 ## Limitações conhecidas
 
-- **Fotos no Android:** na verificação de 2026-11-08, as fotos dos candidatos (`divulgacandcontas.tse.jus.br`) não
-  carregaram no emulador Android: o Coil recebeu erro HTTP e o app mostra as iniciais (o fallback funciona). No iOS
-  elas carregam. Trocar o motor de rede do Coil para OkHttp não mudou o resultado, e um `curl` direto também
-  recebe 403. Ainda não se sabe se o bloqueio já existia antes da migração para KMP.
+- **Sem fotos dos candidatos:** Android e iOS mostram só as iniciais. As fotos do TSE
+  (`divulgacandcontas.tse.jus.br`) respondem 403 no Android (também com `curl`), então o comportamento foi igualado
+  nas duas plataformas e o Coil foi removido.
 - **Dados salvos de um Android antigo:** a Colinha e o tema voltam vazios, porque o DataStore mudou de pasta.
 - **Barra de status no iOS:** acompanha o tema do sistema, não o escolhido no app (`SystemBarsEffect` é vazio no iOS).
 - **Cache no iOS:** entra no backup do iCloud.

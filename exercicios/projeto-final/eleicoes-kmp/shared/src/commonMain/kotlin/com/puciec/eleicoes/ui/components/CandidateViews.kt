@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,13 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
 import com.puciec.eleicoes.ui.theme.Spacing
 import com.puciec.eleicoes.domain.format.Money
 import com.puciec.eleicoes.domain.format.toTitleCase
@@ -45,10 +44,12 @@ fun Candidate.subtitle(): String =
 fun Candidate.assetsLabel(): String = if (assetsDisclosed) Money.compact(totalAssets) else "Não declarado"
 
 /**
- * Foto do candidato; sem foto, ou se a imagem falhar, mostra as iniciais.
- * [decorative]: quando o nome já aparece ao lado (cards, listas), o TalkBack pula a foto em vez de
- * ler "Foto de Fulano, FU, Fulano" (#11).
+ * Avatar do candidato: sempre as iniciais, igual no Android e no iOS. A foto do TSE
+ * (`divulgacandcontas.tse.jus.br`) responde 403 no Android, então nenhuma plataforma a carrega.
+ * [url] fica na assinatura para não mexer nos chamadores. [decorative]: quando o nome já aparece
+ * ao lado (cards, listas), o TalkBack pula o avatar em vez de ler "Foto de Fulano, FU, Fulano" (#11).
  */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun CandidatePhoto(
     url: String?,
@@ -58,20 +59,10 @@ fun CandidatePhoto(
     decorative: Boolean = false,
 ) {
     val initials = remember(name) { name.initials() }
-    val semantics = if (decorative) Modifier.clearAndSetSemantics { } else Modifier
-    val shaped = modifier.size(size).clip(CircleShape).then(semantics)
-    if (url.isNullOrBlank()) {
-        InitialsAvatar(initials, shaped)
-        return
-    }
-    SubcomposeAsyncImage(
-        model = url,
-        contentDescription = if (decorative) null else "Foto de ${name.toTitleCase()}",
-        modifier = shaped,
-        contentScale = ContentScale.Crop,
-        loading = { InitialsAvatar(initials, Modifier.fillMaxSize()) },
-        error = { InitialsAvatar(initials, Modifier.fillMaxSize()) },
-    )
+    val semantics =
+        if (decorative) Modifier.clearAndSetSemantics { }
+        else Modifier.semantics { contentDescription = "Foto de ${name.toTitleCase()}" }
+    InitialsAvatar(initials, modifier.size(size).clip(CircleShape).then(semantics))
 }
 
 @Composable
