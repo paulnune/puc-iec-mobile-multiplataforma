@@ -38,7 +38,7 @@
 
 **Positivas:**
 - cada feature tem a sua pasta e não depende das outras;
-- a lógica (protocolo MCP, filtros, formatação, regras da colinha, cache e variação do patrimônio) é testada no `commonTest`, sem rede: são 169 dos 231 casos de teste, e os mesmos 169 passam num simulador de iPhone (workflow `pf-eleicoes-kmp-ios`). Para o iOS, o único ajuste foi tirar a vírgula de 10 nomes de teste, que o Kotlin/Native não aceita;
+- a lógica (protocolo MCP, filtros, formatação, regras da colinha, cache e variação do patrimônio) é testada no `commonTest`, sem rede: são 234 dos 238 casos de teste, e os mesmos 234 passam num simulador de iPhone (workflow `pf-eleicoes-kmp-ios`). Para a lógica rodar no iOS (#26), o único ajuste foi tirar a vírgula de 10 nomes de teste, que o Kotlin/Native não aceita;
 - o CI builda e testa cada PR, e o merge na `projeto-final` exige a aprovação de outro integrante.
 
 **Negativas:**
