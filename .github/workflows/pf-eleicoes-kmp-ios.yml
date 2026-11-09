@@ -1,7 +1,8 @@
 name: pf-eleicoes-kmp-ios
 
-# Prova de que a lógica do app roda no iOS: compila o módulo shared para o simulador,
-# roda os testes do commonTest num simulador de iPhone e linka o framework "Shared".
+# Prova de que o app roda no iOS: compila o módulo shared (lógica e UI Compose) para o simulador,
+# roda os testes do commonTest num simulador de iPhone, linka o framework "Shared" e builda o
+# projeto Xcode iosApp.
 # Também builda o APK num Mac, para provar que os alvos iOS não atrapalham quem builda
 # o app Android no macOS. Precisa de macOS (Xcode). Não é check obrigatório da
 # projeto-final: o check obrigatório continua sendo o pf-eleicoes-kmp.
@@ -50,6 +51,12 @@ jobs:
 
       - name: Testes do commonTest no simulador, framework do iOS e APK
         run: ./gradlew :shared:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64 :androidApp:assembleDebug --stacktrace
+
+      - name: Build do app iOS (projeto Xcode)
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator \
+            -configuration Debug -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
 
       - name: Relatórios de teste
         if: always()

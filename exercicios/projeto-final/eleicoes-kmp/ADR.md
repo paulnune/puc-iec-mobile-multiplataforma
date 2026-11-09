@@ -16,7 +16,7 @@
 
 ## Decisão
 
-1. **Kotlin Multiplatform.** Dados e regras ficam no módulo `shared` (`commonMain`), sem nenhuma API de Android ou da JVM. O código de plataforma do `shared` se resume ao motor HTTP (`expect fun createHttpClient()`) e ao cache em arquivo. O `shared` compila para Android e iOS (#26), e a UI fica em Compose no `androidApp`.
+1. **Kotlin Multiplatform.** Dados e regras ficam no módulo `shared` (`commonMain`), sem nenhuma API de Android ou da JVM. O código de plataforma do `shared` se resume ao motor HTTP (`expect fun createHttpClient()`) e ao cache em arquivo. O `shared` compila para Android e iOS (#26). A UI Compose e os ViewModels também ficam no `shared` (Compose Multiplatform), e `androidApp` e `iosApp` são só cascas que hospedam a tela.
 2. **Estado em ViewModel + StateFlow**, com fluxo unidirecional: a tela observa um `UiState` (carregando, sucesso, vazio, erro) e só chama funções do ViewModel. Nenhum fetch dentro de composable.
 3. **Fonte de dados atrás de uma porta** (`EleicoesDataSource`), com dois adapters: MCP (o padrão) e REST. O que a API não entrega pronto vira regra do domínio: a variação do patrimônio (#7) é calculada no app a partir de `get_candidate_filings`.
 4. **Cache offline como decorator da porta** (`CachingEleicoesDataSource`, #12). Ele guarda em disco a última resposta boa de cada consulta e a devolve quando a rede ou a API falham. Uma resposta de menos de 5 minutos volta sem chamar a API, por causa do limite de requisições.
@@ -29,7 +29,7 @@
 |---|---|
 | Flutter (A3) | Uma base de código com renderer próprio, mas a regra de negócio ficaria em Dart, sem reaproveitar em apps nativos. KMP compartilha a lógica e deixa a UI nativa. |
 | React Native (A2) | Ecossistema grande, mas os tipos do TypeScript somem em tempo de execução: um JSON fora do formato passa calado até quebrar na tela. Com kotlinx.serialization o DTO é validado ao decodificar, e o erro vira `AppError.Unexpected`. |
-| Compose Multiplatform na UI (como na A5) | Viável: a UI já usa os artefatos multiplataforma do Compose e da lifecycle. Ficou para depois: em 2 dias o grupo testou as 8 telas no Android, e o iOS foi viabilizado no fim do trabalho, começando pela lógica (#26). Os pontos que prendem a UI ao Android são poucos: compartilhar, splash, caminhos do DataStore e do cache, formatação de data, tamanho da tela e a biblioteca de navegação. |
+| UI nativa em SwiftUI no iOS | Reescreveria as 8 telas e os ViewModels em Swift. Compose Multiplatform reaproveita a UI do Android, e os pontos presos ao Android eram poucos. |
 | Estado com bibliotecas MVI/Redux ou `mutableStateOf` na tela | ViewModel + StateFlow é o padrão da plataforma, sobrevive à rotação e é testável sem UI. |
 | Koin ou Hilt para injeção | Peso a mais para um app deste tamanho; o `AppContainer` deixa as dependências explícitas. |
 | Consumir só a REST | Estava quebrada na semana da entrega. A porta isola essa escolha: trocar de adapter não muda tela nem ViewModel. |
@@ -42,7 +42,10 @@
 - o CI builda e testa cada PR, e o merge na `projeto-final` exige a aprovação de outro integrante.
 
 **Negativas:**
-- a interface ainda é só Android. Para o app rodar no iPhone faltam a UI em Compose Multiplatform e um cache em arquivo do iOS;
+- a UI iOS é a mesma do Android (Material 3 em Compose), não a nativa da Apple; o simulador é só arm64; o iOS foi conferido no simulador, não em aparelho;
+- as fotos dos candidatos vêm do TSE e, no Android, a requisição foi recusada (erro HTTP) na verificação de 2026-11-08; o app cai nas iniciais. O motivo não está confirmado (ver README, "Limitações conhecidas");
+- a barra de status do iOS segue o tema do sistema, não o do app;
+- o que prende ao sistema fica em `expect/actual` pequenos (`platform/`): pasta de arquivos, SHA-256, data pt-BR, compartilhar e barras do sistema;
 - o MCP foi pensado para agentes de IA: se o provedor mudar o formato, o adapter muda (a porta limita o estrago a uma classe);
 - a chave da API vai compilada no APK, o que serve para um projeto de aula mas não para produção: lá ela ficaria num BFF, como visto na aula 5;
 - a variação do patrimônio custa uma chamada por candidato, e o cache em disco só tem o que já foi aberto no aparelho. Por isso a demo usa a Presidência e aquece o cache antes.

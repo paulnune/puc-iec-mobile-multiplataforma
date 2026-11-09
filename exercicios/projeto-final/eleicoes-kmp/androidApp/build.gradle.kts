@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.kotlinxSerialization)
 }
 
 kotlin {
@@ -43,27 +42,8 @@ android {
 dependencies {
     implementation(projects.shared)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.compose.runtime)
-    implementation(libs.compose.foundation)
     implementation(libs.compose.ui)
-    implementation(libs.compose.material3)
-    implementation(libs.compose.materialIcons)
-    implementation(libs.compose.uiToolingPreview)
-    implementation(libs.androidx.lifecycle.viewmodelCompose)
-    implementation(libs.androidx.lifecycle.runtimeCompose)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
-
-    // Já declaradas para as issues não disputarem este arquivo.
-    implementation(libs.androidx.datastore.preferences) // #5 colinha, #12 cache, #13 tema
-    implementation(libs.androidx.splashscreen) // #13 splash
+    implementation(libs.androidx.splashscreen)
 
     debugImplementation(libs.compose.uiTooling)
-
-    testImplementation(libs.kotlin.testJunit)
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
 }

@@ -18,7 +18,7 @@ import kotlinx.coroutines.test.runTest
 /** Cache offline (#12): o armazenamento em arquivo, numa pasta temporária. */
 class FileCacheStoreTest {
     private val directory: File = Files.createTempDirectory("eleicoes-cache").toFile()
-    private val store = FileCacheStore(directory)
+    private val store = FileCacheStore(directory.absolutePath)
 
     @AfterTest
     fun cleanUp() {
@@ -32,14 +32,14 @@ class FileCacheStoreTest {
 
         assertEquals(response, store.read("listPlaceResults|president|uf||1"))
         // Uma instância nova (app reaberto) lê o mesmo arquivo.
-        assertEquals(response, FileCacheStore(directory).read("listPlaceResults|president|uf||1"))
+        assertEquals(response, FileCacheStore(directory.absolutePath).read("listPlaceResults|president|uf||1"))
     }
 
     @Test
     fun `chave ausente devolve nulo`() = runTest {
         store.write("getParty|p13", CachedResponse(json = "{}", savedAtEpochMillis = 1))
         assertNull(store.read("getParty|p22"))
-        assertNull(FileCacheStore(File(directory, "pasta-que-nao-existe")).read("getParty|p13"))
+        assertNull(FileCacheStore(File(directory, "pasta-que-nao-existe").absolutePath).read("getParty|p13"))
     }
 
     @Test

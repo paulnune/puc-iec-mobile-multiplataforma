@@ -10,3 +10,8 @@ captures/
 
 # Estado local de assistentes de código (oh-my-claudecode)
 .omc/
+
+# iOS
+iosApp/build/
+*.xcuserstate
+xcuserdata/
