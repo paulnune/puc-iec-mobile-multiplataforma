@@ -43,6 +43,8 @@
 
 **Negativas:**
 - a UI iOS é a mesma do Android (Material 3 em Compose), não a nativa da Apple; o simulador é só arm64; o iOS foi conferido no simulador, não em aparelho;
+- as fotos dos candidatos vêm do TSE e, no Android, a requisição foi recusada (erro HTTP) na verificação de 2026-11-08; o app cai nas iniciais. O motivo não está confirmado (ver README, "Limitações conhecidas");
+- a barra de status do iOS segue o tema do sistema, não o do app;
 - o que prende ao sistema fica em `expect/actual` pequenos (`platform/`): pasta de arquivos, SHA-256, data pt-BR, compartilhar e barras do sistema;
 - o MCP foi pensado para agentes de IA: se o provedor mudar o formato, o adapter muda (a porta limita o estrago a uma classe);
 - a chave da API vai compilada no APK, o que serve para um projeto de aula mas não para produção: lá ela ficaria num BFF, como visto na aula 5;

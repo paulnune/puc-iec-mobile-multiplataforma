@@ -110,6 +110,23 @@ Ou abra `iosApp/iosApp.xcodeproj` no Xcode e rode o esquema `iosApp`. O simulado
 silicon). Para regerar o projeto depois de mexer em `iosApp/project.yml`: `brew install xcodegen` e
 `cd iosApp && xcodegen generate`.
 
+> **IDE:** o Android Studio/IntelliJ avisa "Xcode 26.3+ is required" na configuração *iOS Application* do plugin
+> KMP. O build por `xcodebuild` (acima) e pelo Xcode funciona com o 26.0.1; se a IDE falhar o build, rode pelo
+> terminal. Para a IDE parar de indexar a saída do Xcode, marque `iosApp/build` como *Excluded*.
+> No simulador, o tema escuro segue o do sistema: `xcrun simctl ui booted appearance dark`.
+
+## Limitações conhecidas
+
+- **Fotos no Android:** na verificação de 2026-11-08, as fotos dos candidatos (`divulgacandcontas.tse.jus.br`) não
+  carregaram no emulador Android: o Coil recebeu erro HTTP e o app mostra as iniciais (o fallback funciona). No iOS
+  elas carregam. Trocar o motor de rede do Coil para OkHttp não mudou o resultado, e um `curl` direto também
+  recebe 403. Ainda não se sabe se o bloqueio já existia antes da migração para KMP.
+- **Dados salvos de um Android antigo:** a Colinha e o tema voltam vazios, porque o DataStore mudou de pasta.
+- **Barra de status no iOS:** acompanha o tema do sistema, não o escolhido no app (`SystemBarsEffect` é vazio no iOS).
+- **Cache no iOS:** entra no backup do iCloud.
+- **Não verificado no iOS:** outras abas, paisagem, modo avião com cache, tela de "sem chave", compartilhar da
+  Colinha, aparelho real e iPad (o app é só iPhone).
+
 ## Arquitetura
 
 ```
