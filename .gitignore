@@ -51,3 +51,6 @@ android/app/build/
 
 # Claude Code
 .claude/
+
+# Prints gerados por scripts/rodar-app.sh shot
+scripts/prints/
