@@ -61,9 +61,9 @@ kotlin {
         withHostTest { }
     }
 
-    // iOS: só a lógica (dados, regras e testes do commonMain), como framework estático "Shared",
-    // igual ao da A5. A UI continua no androidApp. Compilar e testar estes alvos exige macOS
-    // (workflow pf-eleicoes-kmp-ios); no Linux o build do APK não depende deles.
+    // iOS: framework estático "Shared", como o da A5, com a lógica e a UI Compose (MainViewController.kt),
+    // que o iosApp hospeda. Compilar e testar estes alvos exige macOS (workflow pf-eleicoes-kmp-ios);
+    // no Linux o build do APK não depende deles.
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
         target.binaries.framework {
             baseName = "Shared"

@@ -36,13 +36,14 @@ na sua branch, com o seu PR.
 
 ## Regras para ninguém travar ninguém
 
-- Mexa na pasta da sua feature (`androidApp/.../feature/<sua>/`) e em arquivos novos de `shared/.../domain/`.
+- Mexa na pasta da sua feature (`shared/.../ui/feature/<sua>/`) e em arquivos novos de `shared/.../domain/`.
 - Arquivos compartilhados (`AppContainer`, `EleicoesApp`, `ui/components`, `ui/theme`, `shared/.../data`, Gradle):
   só a troca que a sua issue pede. Se precisar de mais, combine no grupo antes.
 - Nada de fetch dentro de composable: tela → ViewModel → repositório.
 - Use o tema (`Spacing`, `MaterialTheme.colorScheme`, `MaterialTheme.typography`) e os componentes
   (`LoadingShimmer`, `EmptyState`, `ErrorState`, `CandidateCard`, `OutcomeBadge`) em vez de valores soltos.
-- Toda feature traz pelo menos 1 teste próprio da lógica que criou (`shared/src/commonTest` ou `androidApp/src/test`).
+- Toda feature traz pelo menos 1 teste próprio da lógica que criou, em `shared/src/commonTest`. Só o teste que
+  precisa da JVM vai em `shared/src/androidHostTest`.
 - Estados de carregando, vazio e erro em todas as telas: nunca tela branca.
 
 ## Chave da API

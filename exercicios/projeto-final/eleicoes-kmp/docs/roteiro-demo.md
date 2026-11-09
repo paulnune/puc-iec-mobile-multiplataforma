@@ -144,7 +144,7 @@ Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de
 
 | Integrante | Issues | PRs integrados | Commits |
 |---|---|---|---|
-| Paulo | #1, #2, #9, #26 | #14, #15, #16, #27, #32 | 16 |
+| Paulo | #1, #2, #9, #26 | #14, #15, #16, #27, #32 | 17 |
 | José Ricardo | #3, #8 | #24, #25 | 14 |
 | Diego | #4, #10 | #23, #28 | 3 |
 | Natan | #5, #11 | #21, #22 | 17 |
@@ -156,7 +156,7 @@ Números por pessoa, para a pergunta "como dividiram o trabalho?". A conta é de
 | Pergunta | Quem responde | Onde está a resposta |
 |---|---|---|
 | Por que KMP e não Flutter ou React Native? | Paulo | `ADR.md` |
-| O que é multiplataforma aqui? A tela do iPhone é nativa? | Paulo | `ADR.md`: tudo, menos as cascas e as peças de plataforma (`expect`/`actual`: HTTP, pasta de arquivos, compartilhar e barras do sistema). A lógica e a UI, em Compose Multiplatform como na A5, ficam no `shared`. Os 234 testes do `commonTest` passam num simulador de iPhone (check "testes no simulador iOS" do CI), e o app abre no iPhone (prints do README, #29). A tela não é nativa da Apple: no iOS, o Compose desenha com o próprio renderer, como o Flutter. O grupo testou as 8 telas no Android; no iOS, o README lista o que ainda não foi verificado |
+| O que é multiplataforma aqui? A tela do iPhone é nativa? | Paulo | `ADR.md`: tudo, menos as cascas e as peças de plataforma (`expect`/`actual`: HTTP, pasta de arquivos, SHA-256, data pt-BR, compartilhar e barras do sistema). A lógica e a UI, em Compose Multiplatform como na A5, ficam no `shared`. Os 234 testes do `commonTest` passam num simulador de iPhone (check "testes no simulador iOS" do CI), e o app abre no iPhone (prints em `docs/screenshots/ios/`, #29). A tela não é nativa da Apple: no iOS, o Compose desenha com o próprio renderer, como o Flutter. O grupo testou as 8 telas no Android; no iOS, o README lista o que ainda não foi verificado |
 | A busca só acha quem já foi carregado? | Diego | Não. Ela procura primeiro na lista carregada, sem chamar a API, e só refaz a consulta com `q` no servidor quando não acha ninguém (`RankingViewModel.onSearchTextChange`). Cargo, gênero e UF vão sempre para a API |
 | Onde fica o estado? O que acontece ao girar a tela? | O dono da tela | No ViewModel da feature, que sobrevive à rotação |
 | Onde o app busca os dados? Tem fetch na tela? | Paulo | Não tem: a tela só lê o estado e chama o ViewModel. A chamada sai do repositório (`RankingScreen` é o exemplo) |

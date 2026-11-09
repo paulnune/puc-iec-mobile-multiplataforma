@@ -1,8 +1,8 @@
 package com.puciec.eleicoes.domain.model
 
 /**
- * Erros que a camada de dados entrega à UI. Cada tela decide o texto
- * (androidApp: ui/state/ErrorMessages.kt), nunca mostra a exceção crua.
+ * Erros que a camada de dados entrega à UI. O texto de cada um fica em `userMessage()`
+ * (shared: ui/state/UiState.kt); a tela nunca mostra a exceção crua.
  */
 sealed class AppError(message: String) : Exception(message) {
     data object MissingApiKey : AppError("Chave da API não configurada")
